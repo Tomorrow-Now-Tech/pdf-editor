@@ -4,6 +4,11 @@ Versione browser di Tomorrow Now PDF Editor. Tutte le operazioni sul contenuto
 del PDF avvengono nel browser: l'app non contiene endpoint di upload, account,
 database o funzioni server per ricevere documenti.
 
+Funzioni disponibili: sostituzione visiva del testo esistente, aggiunta di
+testo, gestione pagine, compressione, estrazione/divisione in ZIP e conversione
+del testo in DOCX. La conversione Word privilegia il contenuto modificabile e
+può richiedere correzioni nei documenti con impaginazioni complesse.
+
 ## Sviluppo
 
 ```sh
@@ -18,6 +23,7 @@ npm run dev
 
 - PDF.js visualizza il documento nella memoria del browser.
 - pdf-lib applica le modifiche e genera il download localmente.
+- docx e JSZip generano documenti Word e archivi di pagine nel browser.
 - Nessun analytics o tag pubblicitario è attivo nella configurazione iniziale.
 - Il provider di hosting può comunque elaborare i normali log tecnici di
   accesso, come descritto nella bozza di informativa privacy.

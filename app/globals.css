@@ -122,6 +122,38 @@ body {
   background: rgb(255 255 255 / 2%);
 }
 
+.editor-workspace {
+  height: clamp(620px, 76vh, 860px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editor-canvas-scroll {
+  overscroll-behavior: contain;
+  scrollbar-color: rgb(100 116 139 / 65%) transparent;
+  scrollbar-width: thin;
+}
+
+.tomorrow-now-banner {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 10% 50%, rgb(0 229 255 / 14%), transparent 30%),
+    radial-gradient(circle at 86% 20%, rgb(255 92 230 / 14%), transparent 35%),
+    linear-gradient(120deg, #080d1a 0%, #10142a 55%, #160d27 100%);
+  box-shadow: 0 30px 90px rgb(0 0 0 / 32%), inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
+.tomorrow-now-banner::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(to right, transparent, black 35%, black 70%, transparent);
+  content: "";
+}
+
 .aurora {
   position: absolute;
   z-index: -1;
@@ -196,6 +228,18 @@ body {
 .legal-copy a { color: #22d3ee; }
 .legal-copy a:hover { color: #a5f3fc; }
 .legal-copy .legal-date { margin-top: 2.5rem; color: #64748b; font-size: .75rem; }
+
+@media (max-width: 1023px) {
+  .editor-workspace {
+    height: auto;
+    overflow: visible;
+  }
+
+  .editor-canvas-scroll {
+    min-height: 560px;
+    max-height: 76vh;
+  }
+}
 
 .dark {
   --background: oklch(0.145 0 0);
