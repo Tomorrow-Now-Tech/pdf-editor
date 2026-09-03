@@ -2,8 +2,29 @@
 
 Repository: `Tomorrow-Now-Tech/pdf-editor`, ramo `main`.
 Worker dedicato: `tomorrow-now-pdf-editor`.
-Dominio previsto: `pdf.tomorrownow.tech`, da attivare solo dopo i test remoti.
+Dominio: `pdf.tomorrownow.tech`.
 Non cambiare `tomorrownow.tech`, `www`, MX/email o il repository Mac.
+
+## Stato verificato il 3 settembre 2026
+
+- Pubblicazione diretta attiva: <https://pdf.tomorrownow.tech>.
+- Indirizzo di riserva: <https://tomorrow-now-pdf-editor.gabriele-lettera.workers.dev>.
+- Sorgente della prima pubblicazione: `89d0578d3793ce9a8bb21b366d922269703daa7e`.
+- Versione Worker: `2123eef5-6c10-4ebe-a99f-cf49afeb0fe9`.
+- Test GitHub superati: <https://github.com/Tomorrow-Now-Tech/pdf-editor/actions/runs/33743590954>.
+- Verificati via HTTP anonimo HTTPS, pagine, sorgente esatto, licenze, decoder,
+  font e corrispondenza degli asset. Nessun documento reale caricato.
+- Dominio personalizzato aggiunto dal dashboard dopo aver verificato che
+  non esistessero record DNS `pdf`. Root, email e altri sottodomini non modificati.
+- Il precedente sito Sites rimane disponibile e non è stato ripubblicato.
+- **Deploy automatico Cloudflare non ancora collegato.** Il modulo propone la
+  creazione di un token utente con permessi estesi anche a KV, R2, D1, Vectorize,
+  Queues, Pipelines e Containers. Non è stato confermato né creato: occorre una
+  decisione del titolare o un percorso con credenziali più limitate.
+
+Il workflow GitHub verifica il codice, ma non pubblica da solo su Cloudflare.
+Una nuova versione richiede ancora il deploy manuale descritto sotto, finché
+il collegamento automatico non è stato autorizzato e collaudato.
 
 ## Compilazione riproducibile
 
@@ -33,8 +54,12 @@ Non è un test end-to-end di Chrome/Safari né una revisione legale.
 npm run deploy:cloudflare
 ```
 
-La configurazione iniziale pubblica solo su `workers.dev`: non contiene
-routes né domini personalizzati e non abilita log applicativi persistenti.
+La configurazione del codice abilita `workers.dev`: non contiene routes né
+domini personalizzati e non abilita log applicativi persistenti. Il dominio
+`pdf.tomorrownow.tech` è gestito separatamente nel dashboard. Wrangler 4.128.0
+non modifica i domini personalizzati quando la lista è assente/vuota; verificare
+questo comportamento quando si aggiorna Wrangler e controllare il dominio dopo
+ogni deploy. Non aggiungere wildcard, root o altri domini alla configurazione.
 La verifica precedente al deploy rifiuta build Sites o di un altro commit.
 Non attivare piani a pagamento senza l'approvazione del titolare.
 
@@ -53,6 +78,9 @@ Workers Builds esegue test e build prima del deploy: un errore deve interrompere
 la pubblicazione. Il solo workflow GitHub verde non significa che il collegamento
 Cloudflare sia già attivo. Verificare un deploy effettivo da un commit di prova.
 Le credenziali di pubblicazione restano nella piattaforma, mai nel repository.
+Prima di confermare il modulo, espandere e verificare i permessi del token:
+quello generato automaticamente può essere più ampio del necessario. Non
+autorizzare altri servizi o repository senza una decisione del titolare.
 
 ## Dominio e verifica
 
