@@ -130,6 +130,23 @@ Sites riguardano l'hosting precedente, non il nuovo Worker. L'eventuale rimozion
 del collegamento Sites deve avvenire solo dopo aver confermato che è inutilizzato.
 Controllare HTTPS e il commit esposto sul dominio dopo l'attivazione.
 
+### Alias www del PDF Editor (3 settembre 2026)
+
+- `www.pdf.tomorrownow.tech` è un secondo Custom Domain del solo Worker
+  `tomorrow-now-pdf-editor`; Cloudflare gestisce DNS e certificato HTTPS.
+- La regola `PDF Editor — www verso indirizzo ufficiale`
+  (`8507522603d641438501941db6d6d48f`) usa esclusivamente la condizione
+  `(http.host eq "www.pdf.tomorrownow.tech")`, con redirect permanente 301 verso
+  `concat("https://pdf.tomorrownow.tech", http.request.uri.path)` e conservazione
+  della query string. Non estendere la condizione a wildcard o altri host.
+- Regola aggiunta in fondo senza modificare il reindirizzamento del sito principale,
+  i record email o le autorizzazioni del token GitHub. La configurazione Wrangler
+  continua a lasciare i Custom Domain alla gestione del dashboard.
+- Verificati DNS pubblici Cloudflare/Google, redirect HTTP e HTTPS, percorso e
+  parametri conservati, certificato valido e pagina finale HTTP 200. I resolver
+  che avevano memorizzato NXDOMAIN possono conservare l'errore fino alla scadenza
+  della cache negativa (SOA: 1800 secondi); non disabilitare HTTPS per aggirarlo.
+
 ## Rollback e limiti
 
 I pulsanti Mac scaricano direttamente l'asset DMG definito in `downloads/mac.mjs`,
