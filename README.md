@@ -1,5 +1,9 @@
 # Tomorrow Now PDF Editor — web
 
+Sorgente pubblico: [Trader855/PDF, ramo web](https://github.com/Trader855/PDF/tree/web).
+Per la verifica indipendente in sola lettura consulta [AUDIT.md](AUDIT.md).
+Questo ramo non va unito a `main`: codice Mac, DMG e aggiornamenti rimangono separati.
+
 Versione browser di Tomorrow Now PDF Editor. Tutte le operazioni sul contenuto
 del PDF avvengono nel browser: l'app non contiene endpoint di upload, account,
 database o funzioni server per ricevere documenti.
@@ -12,6 +16,8 @@ può richiedere correzioni nei documenti con impaginazioni complesse.
 ## Sviluppo
 
 ```sh
+git clone --single-branch --branch web https://github.com/Trader855/PDF.git pdf-editor-web
+cd pdf-editor-web
 npm ci
 npm test
 npm run lint
