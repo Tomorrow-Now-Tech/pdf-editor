@@ -25,6 +25,7 @@ import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
+import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
 type FontFamily = 'Helvetica' | 'Times' | 'Courier';
 type ToolMode = 'select' | 'add' | 'edit' | 'compress' | 'split';
@@ -64,7 +65,6 @@ type PdfTextItem = {
 };
 
 const SOURCE_URL = WEB_SOURCE_URL;
-const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
 
 async function importPdfJs() {
   const pdfjs = await import('pdfjs-dist');
@@ -804,7 +804,7 @@ export function PdfEditor() {
       </fieldset>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/8 bg-[#090d17] px-4 py-2 text-[11px] text-slate-500">
         <span>{fileName} · {pageCount} {pageCount === 1 ? 'pagina' : 'pagine'}</span>
-        <span>Elaborazione locale · Per OCR, firme e font incorporati usa <a className="text-cyan-300 hover:text-cyan-200" href={RELEASE_URL}>l’app Mac</a></span>
+        <span>Elaborazione locale · Per OCR, firme e font incorporati usa <a className="text-cyan-300 hover:text-cyan-200" href={MAC_DMG_DOWNLOAD_URL} download={MAC_DMG_FILENAME} title={MAC_DMG_DESCRIPTION}>l’app Mac</a></span>
       </div>
     </div>
   );

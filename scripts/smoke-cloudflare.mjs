@@ -5,6 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { resolve } from 'node:path';
 import { readSourceRevision } from './source-provenance.mjs';
 import { SOURCE_REPOSITORY } from '../legal/source-config.mjs';
+import { MAC_DMG_DOWNLOAD_URL } from '../downloads/mac.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const revision = readSourceRevision(root, true);
@@ -46,6 +47,7 @@ try {
     assert.ok(html.includes('(in fase di emissione)'), path);
     assert.ok(html.includes(`${SOURCE_REPOSITORY}/tree/${revision}`), 'Exact source link missing');
     if (path === '/privacy') assert.ok(html.includes('senza passare da Sites'));
+    if (path === '/') assert.equal(html.split(`href="${MAC_DMG_DOWNLOAD_URL}"`).length - 1, 2, 'Both Mac download buttons must link directly to the DMG');
   }
   const version = await get('/source-version.json');
   assert.deepEqual(await version.json(), manifest);

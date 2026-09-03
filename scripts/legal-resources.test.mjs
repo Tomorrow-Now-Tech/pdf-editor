@@ -7,8 +7,23 @@ import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readSourceRevision, sourceProvenancePlugin } from './source-provenance.mjs';
 import { COMPANY, PENDING_COMPANY_DETAIL } from '../legal/company.mjs';
+import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME } from '../downloads/mac.mjs';
 
 const root = resolve(import.meta.dirname, '..');
+
+test('Mac download links target the installer and keep source links separate', async () => {
+  const url = new URL(MAC_DMG_DOWNLOAD_URL);
+  assert.equal(url.origin, 'https://github.com');
+  assert.match(url.pathname, /^\/Trader855\/PDF\/releases\/download\/v[\d.]+\/[^/]+-arm64\.dmg$/);
+  assert.equal(url.pathname.split('/').at(-1), MAC_DMG_FILENAME);
+  for (const [path, count] of [['app/page.tsx', 2], ['components/pdf-editor.tsx', 1]]) {
+    const source = await readFile(`${root}/${path}`, 'utf8');
+    assert.equal(source.match(/href=\{MAC_DMG_DOWNLOAD_URL\}/g)?.length, count, path);
+    assert.equal(source.match(/download=\{MAC_DMG_FILENAME\}/g)?.length, count, path);
+    assert.ok(source.includes('href={SOURCE_URL}'), 'The source link must remain available');
+    assert.ok(!source.includes('/releases/latest'), 'Download must not open a release page');
+  }
+});
 
 test('operator details preserve the supplied contact and mark unknown identifiers as pending', async () => {
   assert.equal(COMPANY.name, 'Tomorrow Now S.r.l.');

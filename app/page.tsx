@@ -17,8 +17,8 @@ import Link from 'next/link';
 import { PdfEditor } from '@/components/pdf-editor';
 import { CompanyDetails } from '@/components/company-details';
 import { WEB_SOURCE_URL } from '@/legal/source';
+import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
-const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
 const SOURCE_URL = WEB_SOURCE_URL;
 
 export default function Home() {
@@ -41,7 +41,7 @@ export default function Home() {
           <nav className="flex items-center gap-2" aria-label="Navigazione principale">
             <a href="#privacy" className="hidden px-3 py-2 text-sm text-slate-300 hover:text-white md:block">Privacy</a>
             <a href={SOURCE_URL} className="hidden px-3 py-2 text-sm text-slate-300 hover:text-white md:block">Open source</a>
-            <a href={RELEASE_URL} className="brand-button inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-white sm:px-4">
+            <a href={MAC_DMG_DOWNLOAD_URL} download={MAC_DMG_FILENAME} title={MAC_DMG_DESCRIPTION} className="brand-button inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-white sm:px-4">
               <Download className="size-4" />
               <span className="hidden sm:inline">Scarica per Mac</span>
               <span className="sm:hidden">Mac</span>
@@ -109,7 +109,7 @@ export default function Home() {
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Parti online. Continua con gli strumenti avanzati su Mac.</h2>
               <p className="mt-4 text-sm leading-7 text-slate-400">La versione browser offre aggiunta e modifica visiva del testo, compressione, divisione, estrazione del testo in Word e gestione pagine senza upload. La modifica visiva non rimuove il testo originale: non usarla per oscurare dati riservati. L’app Mac aggiunge riconoscimento avanzato dei font incorporati, OCR locale, firme, immagini e moduli.</p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <a href={RELEASE_URL} className="brand-button inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-bold text-white"><Download className="size-4" /> Scarica l’app Mac</a>
+                <a href={MAC_DMG_DOWNLOAD_URL} download={MAC_DMG_FILENAME} title={MAC_DMG_DESCRIPTION} className="brand-button inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-bold text-white"><Download className="size-4" /> Scarica l’app Mac</a>
                 <a href={SOURCE_URL} className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[.035] px-5 text-sm font-semibold text-slate-200 hover:bg-white/[.07]"><GitFork className="size-4" /> Vedi il sorgente</a>
               </div>
             </div>

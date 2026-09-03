@@ -132,6 +132,12 @@ Controllare HTTPS e il commit esposto sul dominio dopo l'attivazione.
 
 ## Rollback e limiti
 
+I pulsanti Mac scaricano direttamente l'asset DMG definito in `downloads/mac.mjs`,
+senza aprire la pagina GitHub delle release. Quando si pubblica una nuova versione
+Mac, aggiornare qui URL e nome del DMG dopo aver verificato che il file sia pubblico
+e risponda con `Content-Disposition: attachment`. Il collegamento al codice resta
+separato; non caricare l'installer fra gli asset Cloudflare.
+
 Conservare il sito Sites attuale fino al collaudo. Per un aggiornamento difettoso
 usare il rollback delle versioni Cloudflare verso l'ultimo deploy verificato;
 per problemi di collegamento ripristinare solo i record PDF precedentemente
