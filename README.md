@@ -1,8 +1,10 @@
 # Tomorrow Now PDF Editor — web
 
-Sorgente pubblico: [Trader855/PDF, ramo web](https://github.com/Trader855/PDF/tree/web).
+Sorgente pubblico: [Tomorrow-Now-Tech/pdf-editor](https://github.com/Tomorrow-Now-Tech/pdf-editor).
 Per la verifica indipendente in sola lettura consulta [AUDIT.md](AUDIT.md).
-Questo ramo non va unito a `main`: codice Mac, DMG e aggiornamenti rimangono separati.
+Questo repository contiene solo il web. Codice Mac, DMG e aggiornamenti rimangono
+in [Trader855/PDF](https://github.com/Trader855/PDF), senza trasferimenti o rinomine.
+Non unire questa cronologia al ramo `main` del repository Mac.
 
 Versione browser di Tomorrow Now PDF Editor. Tutte le operazioni sul contenuto
 del PDF avvengono nel browser: l'app non contiene endpoint di upload, account,
@@ -24,7 +26,7 @@ nascondere dati riservati.
 ## Sviluppo
 
 ```sh
-git clone --single-branch --branch web https://github.com/Trader855/PDF.git pdf-editor-web
+git clone https://github.com/Tomorrow-Now-Tech/pdf-editor.git pdf-editor-web
 cd pdf-editor-web
 npm ci
 npm test
@@ -59,6 +61,19 @@ questi controlli falliscono; non promette fedeltà perfetta né redazione sicura
 
 La pubblicazione definitiva richiede la revisione professionale delle pagine
 privacy, termini e licenze presenti in `app/`.
+
+## Cloudflare Workers + Static Assets
+
+La configurazione diretta è separata da Sites: `npm run build:cloudflare`
+usa `wrangler.cloudflare.jsonc`, non aggiunge il plugin Sites alla build e
+non richiede credenziali per compilare. `npm run build` conserva invece il
+percorso Sites esistente; `.openai/hosting.json` non è stato alterato.
+
+`npm run ci:cloudflare` esegue lint, tipi, regressioni PDF, compilazione,
+verifica degli asset e smoke HTTP del Worker compilato. La pipeline GitHub
+esegue gli stessi controlli senza credenziali Cloudflare e senza pubblicare.
+Per collegamento GitHub → Worker, account, dominio e rollback consulta
+[`CLOUDFLARE_DEPLOYMENT.md`](CLOUDFLARE_DEPLOYMENT.md).
 
 ## Provenienza e avvisi legali
 

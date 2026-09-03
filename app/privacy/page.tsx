@@ -1,6 +1,7 @@
 import { LegalPage } from '@/components/legal-page';
 import { CompanyDetails } from '@/components/company-details';
 import { COMPANY } from '@/legal/company.mjs';
+import { WEB_HOSTING_DESCRIPTION } from '@/legal/hosting';
 
 export default function PrivacyPage() {
   return (
@@ -15,7 +16,7 @@ export default function PrivacyPage() {
 
       <h2>3. Dati tecnici di accesso</h2>
       <p>Il fornitore di hosting e rete può trattare indirizzo IP, data e ora, URL richiesto, user agent, informazioni di sicurezza e diagnostica per erogare e proteggere il sito. Tempi di conservazione, base giuridica, eventuali trasferimenti e accordi applicabili restano da completare in questa informativa.</p>
-      <p>Il sito usa Sites e una distribuzione su Cloudflare Workers. La configurazione tecnica non dimostra da sola quali siano i ruoli privacy, il contratto applicabile o la localizzazione dei dati. Responsabili e sub-responsabili, accordi, conservazione e garanzie per eventuali trasferimenti extra SEE restano da verificare sulla configurazione e sui contratti effettivi.</p>
+      <p>Questa versione del sito usa {WEB_HOSTING_DESCRIPTION}. La configurazione tecnica non dimostra da sola quali siano i ruoli privacy, il contratto applicabile o la localizzazione dei dati. Responsabili e sub-responsabili, accordi, conservazione e garanzie per eventuali trasferimenti extra SEE restano da verificare sulla configurazione e sui contratti effettivi.</p>
 
       <h2>4. Cookie e strumenti di tracciamento</h2>
       <p>La configurazione iniziale non prevede analytics, pubblicità comportamentale o cookie non necessari. Se in futuro saranno aggiunti strumenti ulteriori, questa informativa e l’eventuale meccanismo di consenso verranno aggiornati prima dell’attivazione.</p>

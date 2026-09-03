@@ -51,8 +51,12 @@ test('provenance manifest links the same exact source commit and ZIP', () => {
   assert.equal(artifact.fileName, 'source-version.json');
   const json = JSON.parse(artifact.source);
   assert.equal(json.revision, revision);
-  assert.equal(json.sourceUrl, `https://github.com/Trader855/PDF/tree/${revision}`);
-  assert.equal(json.archiveUrl, `https://github.com/Trader855/PDF/archive/${revision}.zip`);
+  assert.equal(json.deploymentTarget, 'sites');
+  assert.equal(json.sourceUrl, `https://github.com/Tomorrow-Now-Tech/pdf-editor/tree/${revision}`);
+  assert.equal(json.archiveUrl, `https://github.com/Tomorrow-Now-Tech/pdf-editor/archive/${revision}.zip`);
+  sourceProvenancePlugin(revision, 'cloudflare').generateBundle.call({ emitFile: (value) => { artifact = value; } });
+  assert.equal(JSON.parse(artifact.source).deploymentTarget, 'cloudflare');
+  assert.throws(() => sourceProvenancePlugin(revision, 'unknown'), /Unknown deployment target/);
 });
 
 test('license inventory covers every locked entry and preserves texts', async () => {

@@ -6,8 +6,8 @@ export default function LicensesPage() {
     <LegalPage title="Open source e licenze" intro="Dove trovare il codice e quali diritti accompagnano il software.">
       <h2>Codice sorgente</h2>
       <p><a href={WEB_SOURCE_URL}>Sorgente della versione web in uso</a>{WEB_SOURCE_REVISION ? <> · revisione <code>{WEB_SOURCE_REVISION}</code></> : ' · anteprima locale con modifiche non ancora pubblicate'}.</p>
-      {WEB_SOURCE_ARCHIVE && <p><a href={WEB_SOURCE_ARCHIVE}>Scarica il sorgente completo di questa versione (ZIP)</a>, con istruzioni di build e lockfile. <a href={WEB_SOURCE_BRANCH}>Segui lo sviluppo nel ramo web</a>.</p>}
-      <p>Il sorgente di questa versione browser, le istruzioni di compilazione e gli avvisi delle dipendenze sono nel <a href="https://github.com/Trader855/PDF/tree/web">ramo web dedicato</a>. Il codice è separato dalla versione Mac.</p>
+      {WEB_SOURCE_ARCHIVE && <p><a href={WEB_SOURCE_ARCHIVE}>Scarica il sorgente completo di questa versione (ZIP)</a>, con istruzioni di build e lockfile. <a href={WEB_SOURCE_BRANCH}>Segui lo sviluppo della versione web</a>.</p>}
+      <p>Il sorgente di questa versione browser, le istruzioni di compilazione e gli avvisi delle dipendenze sono nel <a href={WEB_SOURCE_BRANCH}>repository web dedicato</a>. Il codice è separato dalla versione Mac.</p>
       <p>Il sorgente dell’app Mac è disponibile nel repository pubblico <a href="https://github.com/Trader855/PDF">github.com/Trader855/PDF</a>. Ogni release deve indicare il commit o tag corrispondente al relativo DMG e ZIP.</p>
 
       <h2>Licenza AGPL v3</h2>
@@ -27,7 +27,7 @@ export default function LicensesPage() {
       </ul>
 
       <h2>Marchi</h2>
-      <p>La licenza del codice non concede il diritto di usare il nome, i loghi o l’icona Tomorrow Now per presentare una build modificata come ufficiale. Consulta il file TRADEMARKS nel repository.</p>
+      <p>La licenza del codice non concede il diritto di usare il nome, i loghi o l’icona Tomorrow Now per presentare una build modificata come ufficiale.</p>
 
       <h2>Revisione professionale</h2>
       <p>Licenza, avvisi di terze parti e modalità di offerta del servizio devono essere verificati da un professionista prima del lancio definitivo.</p>

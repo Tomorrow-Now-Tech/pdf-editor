@@ -36,6 +36,9 @@ const localBindingConfig = {
 };
 
 export default defineConfig(async ({ command }) => {
+  const deploymentTarget = process.env.PDF_DEPLOY_TARGET || 'sites';
+  if (!['sites', 'cloudflare'].includes(deploymentTarget)) throw new Error('Unknown PDF_DEPLOY_TARGET');
+  const directCloudflare = deploymentTarget === 'cloudflare';
   const sourceRevision = readSourceRevision(import.meta.dirname, command === 'build');
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
@@ -47,18 +50,23 @@ export default defineConfig(async ({ command }) => {
   const { cloudflare } = await import('@cloudflare/vite-plugin');
 
   return {
-    define: { __WEB_SOURCE_REVISION__: JSON.stringify(sourceRevision) },
+    define: {
+      __WEB_SOURCE_REVISION__: JSON.stringify(sourceRevision),
+      __WEB_HOSTING_TARGET__: JSON.stringify(deploymentTarget),
+    },
     css: { postcss: { plugins: [tailwindcss()] } },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
     plugins: [
-      sourceProvenancePlugin(sourceRevision),
+      sourceProvenancePlugin(sourceRevision, deploymentTarget),
       vinext(),
-      sites(),
+      ...(!directCloudflare ? [sites()] : []),
       cloudflare({
         viteEnvironment: { name: 'rsc', childEnvironments: ['ssr'] },
-        config: localBindingConfig,
+        ...(directCloudflare
+          ? { configPath: './wrangler.cloudflare.jsonc' }
+          : { config: localBindingConfig }),
       }),
     ],
   };

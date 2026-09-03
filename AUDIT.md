@@ -1,10 +1,11 @@
 # Independent read-only audit — browser application
 
-Public source: https://github.com/Trader855/PDF/tree/web
+Public source: https://github.com/Tomorrow-Now-Tech/pdf-editor
 
-This branch is an independent source tree. It must **not** be merged into
-`main`, which builds the Mac application and owns its DMG/ZIP releases.
-The `security-hardening` branch contains the desktop security candidate.
+This repository is an independent web source tree. It must **not** be merged
+into `Trader855/PDF`'s `main`, which builds the Mac application and owns its
+DMG/ZIP releases. That repository's `security-hardening` branch contains the
+desktop security candidate. Earlier web snapshots remain in its `web` branch.
 
 ## Instructions for an external reviewer
 
@@ -67,11 +68,14 @@ were not changed in this web-only follow-up. Public launch is not approved.
 
 ## Hosting and launch status
 
-The current preview remains access-restricted. This GitHub publication makes
-**source code**, not the hosted preview, public. `.openai/hosting.json`
-contains only a hosting project identifier, not credentials. Do not change
-it or request deployment credentials during the audit. You can inspect the
-source without access to the private preview or the owner's Mac.
+The owner opened the Sites beta to public access on 3 September 2026.
+`.openai/hosting.json` contains only the existing hosting project identifier,
+not credentials. The direct Cloudflare target is separate; see
+`CLOUDFLARE_DEPLOYMENT.md`. Neither committed deployment configuration nor
+successful local tests establish that the new Worker/domain or Git integration
+is live: verify remote state. Do not change access or request deployment
+credentials during a read-only audit. The public source is inspectable without
+access to the owner's Mac or other Tomorrow Now repositories.
 
 Privacy and terms in `app/` are drafts with outstanding owner/provider
 details and professional review. Code publication is not a legal or security

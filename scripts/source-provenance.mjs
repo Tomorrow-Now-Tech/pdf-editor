@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
+import { SOURCE_REPOSITORY, SOURCE_BRANCH_URL } from '../legal/source-config.mjs';
 
-export const sourceBranchUrl = 'https://github.com/Trader855/PDF/tree/web';
+export const sourceBranchUrl = SOURCE_BRANCH_URL;
 
 export function readSourceRevision(root, requireClean = false) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
@@ -16,7 +17,8 @@ export function readSourceRevision(root, requireClean = false) {
   }
 }
 
-export function sourceProvenancePlugin(revision) {
+export function sourceProvenancePlugin(revision, deploymentTarget = 'sites') {
+  if (!['sites', 'cloudflare'].includes(deploymentTarget)) throw new Error('Unknown deployment target');
   return {
     name: 'pdf-source-provenance',
     generateBundle() {
@@ -24,8 +26,9 @@ export function sourceProvenancePlugin(revision) {
         type: 'asset', fileName: 'source-version.json',
         source: JSON.stringify({
           revision,
-          sourceUrl: revision ? `https://github.com/Trader855/PDF/tree/${revision}` : sourceBranchUrl,
-          archiveUrl: revision ? `https://github.com/Trader855/PDF/archive/${revision}.zip` : null,
+          deploymentTarget,
+          sourceUrl: revision ? `${SOURCE_REPOSITORY}/tree/${revision}` : sourceBranchUrl,
+          archiveUrl: revision ? `${SOURCE_REPOSITORY}/archive/${revision}.zip` : null,
           license: 'AGPL-3.0-only',
         }, null, 2),
       });
