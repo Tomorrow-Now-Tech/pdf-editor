@@ -17,14 +17,17 @@ Non cambiare `tomorrownow.tech`, `www`, MX/email o il repository Mac.
 - Dominio personalizzato aggiunto dal dashboard dopo aver verificato che
   non esistessero record DNS `pdf`. Root, email e altri sottodomini non modificati.
 - Il precedente sito Sites rimane disponibile e non è stato ripubblicato.
-- **Deploy automatico Cloudflare non ancora collegato.** Il modulo propone la
-  creazione di un token utente con permessi estesi anche a KV, R2, D1, Vectorize,
-  Queues, Pipelines e Containers. Non è stato confermato né creato: occorre una
-  decisione del titolare o un percorso con credenziali più limitate.
+- Il token esteso proposto da Workers Builds non è stato creato. Il percorso
+  scelto per gli aggiornamenti è GitHub Actions, con credenziale limitata.
+- Creato l'ambiente GitHub `production` del solo repository PDF, con whitelist
+  del solo branch `main` e variabile non segreta `CLOUDFLARE_ACCOUNT_ID`.
+- L'attivazione è completa soltanto quando il segreto è stato autorizzato e
+  salvato e il primo job `deploy` termina con successo. Un job `verify` verde
+  da solo non dimostra che la pubblicazione automatica sia operativa.
 
-Il workflow GitHub verifica il codice, ma non pubblica da solo su Cloudflare.
-Una nuova versione richiede ancora il deploy manuale descritto sotto, finché
-il collegamento automatico non è stato autorizzato e collaudato.
+La versione effettivamente pubblicata è sempre quella esposta da
+`https://pdf.tomorrownow.tech/source-version.json`, non necessariamente l'ultimo
+commit del repository. Conservare il deploy manuale per emergenze e rollback.
 
 ## Compilazione riproducibile
 
@@ -63,24 +66,46 @@ ogni deploy. Non aggiungere wildcard, root o altri domini alla configurazione.
 La verifica precedente al deploy rifiuta build Sites o di un altro commit.
 Non attivare piani a pagamento senza l'approvazione del titolare.
 
-## Aggiornamenti automatici GitHub → Cloudflare
+## Aggiornamenti automatici GitHub Actions → Cloudflare
 
-Nel Worker, Settings → Builds → Connect repository:
+Il workflow `.github/workflows/web-ci.yml` separa due job:
 
-- autorizzare l'app GitHub Cloudflare solo per `Tomorrow-Now-Tech/pdf-editor`;
-- production branch: `main`, root directory: repository root;
-- Node: `22.23.2` (variabile di build `NODE_VERSION` se necessaria);
-- build command: `npm run ci:cloudflare`;
-- deploy command: `npm run deploy:cloudflare`;
-- non-production deploy command: `npm run check:cloudflare && npx wrangler versions upload --config dist/server/wrangler.json`.
+1. `verify`: installa dal lockfile, esegue lint, typecheck, test, build e smoke
+   locale; non riceve la credenziale Cloudflare. Conserva l'artefatto verificato
+   per tre giorni per le esecuzioni sul ramo ufficiale.
+2. `deploy`: dipende dal successo di `verify`, parte soltanto sul repository
+   ufficiale e sul branch `main`, fuori dalle pull request. Usa l'ambiente
+   `production`, scarica l'artefatto della stessa esecuzione e ne ricontrolla
+   provenienza, versione e destinazione. Non pubblica revisioni superate da main.
 
-Workers Builds esegue test e build prima del deploy: un errore deve interrompere
-la pubblicazione. Il solo workflow GitHub verde non significa che il collegamento
-Cloudflare sia già attivo. Verificare un deploy effettivo da un commit di prova.
-Le credenziali di pubblicazione restano nella piattaforma, mai nel repository.
-Prima di confermare il modulo, espandere e verificare i permessi del token:
-quello generato automaticamente può essere più ampio del necessario. Non
-autorizzare altri servizi o repository senza una decisione del titolare.
+La credenziale è esposta soltanto allo step `Publish verified assets`.
+Il controllo HTTP successivo verifica sul dominio pubblico HTTPS, sorgente
+esatto, pagine legali, MIME e contenuto di font e decoder PDF, senza upload di PDF.
+Una verifica remota fallita segnala il problema ma non effettua un rollback
+automatico: valutare la versione precedente prima di ripristinarla.
+
+### Credenziale minima
+
+- Creare, dopo conferma del titolare, un token Cloudflare con il solo permesso
+  **Account → Script Workers → Modifica**, limitato all'account proprietario.
+- Non utilizzare i template estesi Workers Builds e non concedere DNS, Routes,
+  KV, R2, D1, Queues, Containers, AI o amministrazione utenti/token.
+- Cloudflare applica questo permesso a livello di account, non al singolo Worker:
+  non è una garanzia di isolamento dagli altri Worker che l'account ospiterà.
+  Per isolamento forte tra prodotti serve anche separazione degli account.
+- Salvare il valore esclusivamente come `CLOUDFLARE_API_TOKEN` tra gli
+  **Environment secrets** di `production` in `Tomorrow-Now-Tech/pdf-editor`.
+  Non usare un segreto di organizzazione, non inserirlo in file, log o chat.
+- La proposta corrente ha scadenza 4 settembre 2027. Prima della scadenza,
+  sostituire il segreto e verificarne il deploy, poi revocare il vecchio token.
+- Non impostare filtri IP statici sui runner GitHub standard senza un egress
+  stabile: i loro indirizzi cambiano e il deploy smetterebbe di funzionare.
+
+Le azioni GitHub sono fissate a revisioni immutabili. Le pull request non
+pubblicano; la whitelist di `production` consente soltanto il branch `main`.
+Questo presuppone che l'accesso in scrittura a main e le dipendenze del lockfile
+restino affidabili. Non attivare contemporaneamente Workers Builds: causerebbe
+deploy duplicati con un'altra credenziale.
 
 ## Dominio e verifica
 

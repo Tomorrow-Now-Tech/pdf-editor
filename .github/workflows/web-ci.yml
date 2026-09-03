@@ -1,4 +1,4 @@
-name: PDF web checks
+name: PDF web checks and deploy
 
 on:
   push:
@@ -11,7 +11,9 @@ permissions:
 
 concurrency:
   group: pdf-web-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Never interrupt a production upload. A newer queued main revision supersedes
+  # older queued runs; PR checks can still be cancelled when a PR changes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
@@ -29,3 +31,62 @@ jobs:
       - run: npm run ci:cloudflare
         env:
           WRANGLER_SEND_METRICS: 'false'
+      - name: Preserve the verified Worker
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.repository == 'Tomorrow-Now-Tech/pdf-editor'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cloudflare-worker-${{ github.sha }}
+          path: dist/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.repository == 'Tomorrow-Now-Tech/pdf-editor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://pdf.tomorrownow.tech
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.2'
+          cache: npm
+      - run: npm ci
+      - run: npm run sync:pdfjs && npm run legal:generate
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: cloudflare-worker-${{ github.sha }}
+          path: dist/
+      - run: npm run check:cloudflare
+      - name: Do not publish a superseded revision
+        id: current
+        shell: bash
+        run: |
+          latest_sha=$(git ls-remote origin refs/heads/main | cut -f1)
+          test -n "$latest_sha"
+          if [ "$latest_sha" = "$GITHUB_SHA" ]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Skipping an older revision: main has moved forward.'
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish verified assets
+        if: steps.current.outputs.publish == 'true'
+        run: npm run deploy:cloudflare
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: 'false'
+          WRANGLER_LOG_PATH: .wrangler/logs
+      - name: Verify the public release without uploading documents
+        if: steps.current.outputs.publish == 'true'
+        run: node scripts/verify-public-deployment.mjs
