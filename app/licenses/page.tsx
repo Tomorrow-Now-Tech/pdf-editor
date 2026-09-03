@@ -4,6 +4,7 @@ export default function LicensesPage() {
   return (
     <LegalPage title="Open source e licenze" intro="Dove trovare il codice e quali diritti accompagnano il software.">
       <h2>Codice sorgente</h2>
+      <p>Il sorgente di questa versione browser, le istruzioni di compilazione e gli avvisi delle dipendenze sono nel <a href="https://github.com/Trader855/PDF/tree/web">ramo web dedicato</a>. Il codice è separato dalla versione Mac.</p>
       <p>Il sorgente dell’app Mac è disponibile nel repository pubblico <a href="https://github.com/Trader855/PDF">github.com/Trader855/PDF</a>. Ogni release deve indicare il commit o tag corrispondente al relativo DMG e ZIP.</p>
 
       <h2>Licenza AGPL v3</h2>
@@ -14,6 +15,7 @@ export default function LicensesPage() {
         <li>PyMuPDF: AGPL v3 o licenza commerciale Artifex.</li>
         <li>PDF.js: Apache License 2.0.</li>
         <li>pdf-lib: MIT License.</li>
+        <li>Decodificatori PDF.js (OpenJPEG, JBIG2 e QCMS), CMaps, font standard e profili ICC: avvisi originali inclusi nelle risorse del sito e indicati nel ramo web.</li>
         <li>Electron e strumenti collegati: licenze indicate in THIRD_PARTY_NOTICES.</li>
         <li>Font Caladea, Carlito e Liberation: SIL Open Font License 1.1.</li>
       </ul>

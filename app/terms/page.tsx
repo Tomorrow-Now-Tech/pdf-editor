@@ -14,6 +14,7 @@ export default function TermsPage() {
 
       <h2>4. Verifica dei risultati</h2>
       <p>L’utente deve controllare il documento prima di firmarlo, inviarlo o usarlo in procedimenti professionali, amministrativi o legali. Impaginazione, font e campi complessi possono cambiare tra diversi PDF.</p>
+      <p>La modifica visiva nel browser copre il testo con un rettangolo bianco e aggiunge nuove scritte con un font sostitutivo: non elimina il testo originale, che può rimanere ricercabile, copiabile ed estraibile. Non è uno strumento per oscurare informazioni riservate. La conversione Word estrae il testo, anche eventualmente nascosto, senza garantire l’impaginazione. La compressione forte trasforma le pagine in immagini e perde testo selezionabile, collegamenti e moduli: verificare sempre il risultato.</p>
 
       <h2>5. Garanzie e responsabilità</h2>
       <p>Il software è fornito senza garanzie ulteriori rispetto a quelle inderogabili previste dalla legge. Limitazioni di responsabilità, legge applicabile, foro e disciplina consumer saranno definite soltanto dopo la revisione professionale.</p>

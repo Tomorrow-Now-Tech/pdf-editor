@@ -6,11 +6,16 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "sync:pdfjs": "node scripts/sync-pdfjs-assets.mjs",
+    "predev": "npm run sync:pdfjs",
+    "prebuild": "npm run sync:pdfjs",
+    "pretest": "npm run sync:pdfjs",
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "test": "node scripts/qa-browser-editor.mjs",
+    "test": "node scripts/qa-browser-editor.mjs && node --test scripts/pdf-safety.test.mjs",
     "lint": "oxlint app components/pdf-editor.tsx components/legal-page.tsx --ignore-pattern 'components/ui/**'",
+    "typecheck": "tsc --noEmit --incremental false",
     "format": "oxfmt"
   },
   "dependencies": {
@@ -18,7 +23,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "1.31.0",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.3.289",
+    "pdfjs-dist": "6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-server-dom-webpack": "^19.2.8",

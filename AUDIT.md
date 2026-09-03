@@ -34,6 +34,37 @@ it does not promise layout fidelity or OCR of scans.
 testing. `npm run lint` checks the application source. `npm run build` writes
 generated build output; run it only in an authorized disposable checkout.
 
+## Follow-up to ALTA-W1 / ALTA-W2 (3 September 2026)
+
+- UI/landing call the operation **visual editing**. A persistent warning and
+  explicit acknowledgement explain that the original remains recoverable,
+  white backgrounds are painted and the font is a substitute. Word export
+  refuses documents visually edited in the current session; pre-existing
+  hidden/covered text in imported PDFs cannot be reliably detected.
+- PDF.js resources are synchronized from the exact pinned package before
+  dev/build/test. All WASM, fallbacks, CMaps, standard fonts, ICC profiles and
+  resource licenses are included in build output and served same-origin.
+- `stopAtErrors: true` alone is insufficient: PDF.js can resolve failed image
+  XObjects to null. `pdf/runtime.mjs` checks image dependency objects after
+  rendering. Strong compression uses a fresh document/worker and does not
+  save or replace working bytes if any page fails. Raster allocation is
+  capped at 16 million pixels/page; this is NOT a whole-document memory cap.
+- The adapter uses version-sensitive PDFObjects/image IDs. Regression tests
+  cover real synthetic JPX/JBIG2 pixels, missing decoders/fallbacks, a corrupt
+  second page, unmodified input bytes and no partial output save. They use
+  PDF.js legacy + native canvas in Node, not actual Chrome/Safari. Browser
+  compatibility, arbitrary malformed PDFs, color fidelity and all annotation
+  appearances are not certified by these tests.
+- Error/success reporting avoids claiming a failed text mutation succeeded;
+  document loading uses a generation guard and preserves the prior document
+  on load failure. Controls are disabled while an operation is running.
+
+Still outstanding: the remaining MEDIA web findings (whole-document resource
+budgets, lazy thumbnails, CSP/security headers and deployed network audit,
+password workflow), additional concurrency/browser tests and metadata/form
+preservation warnings. The Mac findings belong to `security-hardening` and
+were not changed in this web-only follow-up. Public launch is not approved.
+
 ## Hosting and launch status
 
 The current preview remains access-restricted. This GitHub publication makes

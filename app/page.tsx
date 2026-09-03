@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { PdfEditor } from '@/components/pdf-editor';
 
 const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
-const SOURCE_URL = 'https://github.com/Trader855/PDF';
+const SOURCE_URL = 'https://github.com/Trader855/PDF/tree/web';
 
 export default function Home() {
   return (
@@ -59,11 +59,11 @@ export default function Home() {
                 <ShieldCheck /> Nessun account · Nessun caricamento
               </span>
               <h1 className="max-w-4xl text-balance text-4xl font-black tracking-[-0.045em] text-white sm:text-5xl lg:text-[58px] lg:leading-[1.03]">
-                Modifica davvero i tuoi PDF.
+                Lavora sui tuoi PDF.
                 <span className="brand-gradient-text block">Gratis, privato, nel browser.</span>
               </h1>
               <p className="mt-4 max-w-3xl text-pretty text-base leading-7 text-slate-300 sm:text-lg">
-                Modifica il testo esistente, aggiungi contenuti, comprimi, dividi e converti in Word. Il file viene elaborato sul tuo dispositivo e non viene inviato ai nostri server.
+                Aggiungi testo, comprimi, dividi e converti in Word. Puoi anche coprire e riscrivere le scritte: è una modifica visiva, non una cancellazione dell’originale. Il documento viene elaborato sul tuo dispositivo, senza upload.
               </p>
             </div>
 
@@ -76,7 +76,7 @@ export default function Home() {
           <PdfEditor />
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Capability icon={<PencilLine />} title="Modifica testo" text="Seleziona le scritte direttamente sulla pagina e sostituiscile." />
+            <Capability icon={<PencilLine />} title="Modifica visiva" text="Copri e riscrivi con un font sostitutivo. L’originale resta recuperabile: non è redazione sicura." />
             <Capability icon={<FileArchive />} title="Comprimi PDF" text="Ottimizzazione senza perdita oppure riduzione forte del peso." />
             <Capability icon={<Scissors />} title="Dividi pagine" text="Estrai un intervallo o crea uno ZIP con le singole pagine." />
             <Capability icon={<FileText />} title="PDF in Word" text="Estrai il testo in un documento DOCX realmente modificabile." />
@@ -105,7 +105,7 @@ export default function Home() {
             <div>
               <p className="eyebrow">Web + Mac</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Parti online. Continua con gli strumenti avanzati su Mac.</h2>
-              <p className="mt-4 text-sm leading-7 text-slate-400">La versione browser copre modifica del testo, compressione, divisione, conversione Word e gestione pagine senza upload. L’app Mac aggiunge riconoscimento avanzato dei font incorporati, OCR locale, firme, immagini e moduli.</p>
+              <p className="mt-4 text-sm leading-7 text-slate-400">La versione browser offre aggiunta e modifica visiva del testo, compressione, divisione, estrazione del testo in Word e gestione pagine senza upload. La modifica visiva non rimuove il testo originale: non usarla per oscurare dati riservati. L’app Mac aggiunge riconoscimento avanzato dei font incorporati, OCR locale, firme, immagini e moduli.</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href={RELEASE_URL} className="brand-button inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-bold text-white"><Download className="size-4" /> Scarica l’app Mac</a>
                 <a href={SOURCE_URL} className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[.035] px-5 text-sm font-semibold text-slate-200 hover:bg-white/[.07]"><GitFork className="size-4" /> Vedi il sorgente</a>

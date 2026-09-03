@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
+import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
 
 type FontFamily = 'Helvetica' | 'Times' | 'Courier';
 type ToolMode = 'select' | 'add' | 'edit' | 'compress' | 'split';
@@ -61,7 +62,7 @@ type PdfTextItem = {
   transform: number[];
 };
 
-const SOURCE_URL = 'https://github.com/Trader855/PDF';
+const SOURCE_URL = 'https://github.com/Trader855/PDF/tree/web';
 const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
 
 async function importPdfJs() {
@@ -133,6 +134,7 @@ export function PdfEditor() {
   const renderTaskRef = useRef<RenderTask | null>(null);
   const renderGenerationRef = useRef(0);
   const thumbnailGenerationRef = useRef(0);
+  const loadGenerationRef = useRef(0);
   const thumbnailRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dragState = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
@@ -156,6 +158,8 @@ export function PdfEditor() {
   const [fontColor, setFontColor] = useState('#111827');
   const [splitFrom, setSplitFrom] = useState(1);
   const [splitTo, setSplitTo] = useState(1);
+  const [visualEditAcknowledged, setVisualEditAcknowledged] = useState(false);
+  const [hasVisualEdits, setHasVisualEdits] = useState(false);
 
   const selectedTextBox = textBoxes.find((box) => box.id === selectedTextId) || null;
 
@@ -175,9 +179,11 @@ export function PdfEditor() {
     const generation = ++renderGenerationRef.current;
     if (renderTaskRef.current) {
       try { renderTaskRef.current.cancel(); } catch { /* already complete */ }
+      try { await renderTaskRef.current.promise; } catch { /* cancellation is expected */ }
     }
 
     const page = await pdf.getPage(currentPage);
+    if (generation !== renderGenerationRef.current) return;
     const baseViewport = page.getViewport({ scale: 1 });
     const availableWidth = Math.max(280, Math.min(980, frame.clientWidth - 32));
     const scale = Math.min(2, availableWidth / baseViewport.width);
@@ -203,6 +209,7 @@ export function PdfEditor() {
     try {
       await renderTask.promise;
       if (generation !== renderGenerationRef.current) return;
+      await assertRenderedImages(page);
 
       const pdfjs = await importPdfJs();
       const content = await page.getTextContent();
@@ -273,29 +280,33 @@ export function PdfEditor() {
   }, []);
 
   const loadBytes = useCallback(async (nextBytes: Uint8Array, nextName?: string, preferredPage = 1) => {
+    const loadGeneration = ++loadGenerationRef.current;
     setBusy(true);
     setError('');
     setStatus('Apertura del PDF…');
-    const thumbnailGeneration = ++thumbnailGenerationRef.current;
-    ++renderGenerationRef.current;
+    let candidateTask: PDFDocumentLoadingTask | null = null;
     try {
+      const pdfjs = await importPdfJs();
+      candidateTask = pdfjs.getDocument(pdfDocumentOptions(nextBytes));
+      const pdf = await candidateTask.promise as PDFDocumentProxy;
+      if (loadGeneration !== loadGenerationRef.current) {
+        await candidateTask.destroy();
+        return false;
+      }
+      const thumbnailGeneration = ++thumbnailGenerationRef.current;
+      ++renderGenerationRef.current;
       if (renderTaskRef.current) {
         try { renderTaskRef.current.cancel(); } catch { /* already complete */ }
       }
       const previousLoadingTask = loadingTaskRef.current;
-      loadingTaskRef.current = null;
-      pdfDocumentRef.current = null;
-      if (previousLoadingTask) {
-        try { await previousLoadingTask.destroy(); } catch { /* render cancellation is expected */ }
-      }
-
-      const pdfjs = await importPdfJs();
-      const loadingTask = pdfjs.getDocument({ data: nextBytes.slice() });
-      loadingTaskRef.current = loadingTask;
-      const pdf = await loadingTask.promise as PDFDocumentProxy;
+      loadingTaskRef.current = candidateTask;
       pdfDocumentRef.current = pdf;
       setBytes(nextBytes);
-      if (nextName) setFileName(nextName);
+      if (nextName) {
+        setFileName(nextName);
+        setHasVisualEdits(false);
+        setVisualEditAcknowledged(false);
+      }
       setPageCount(pdf.numPages);
       setCurrentPage(Math.max(1, Math.min(preferredPage, pdf.numPages)));
       setSplitFrom(1);
@@ -306,11 +317,17 @@ export function PdfEditor() {
       setDocumentVersion((value) => value + 1);
       setStatus('Documento elaborato soltanto nel browser');
       void renderThumbnails(pdf, thumbnailGeneration);
+      void previousLoadingTask?.destroy().catch(() => undefined);
+      return true;
     } catch (loadError: unknown) {
-      setError(errorMessage(loadError, 'Impossibile aprire questo PDF.'));
-      setStatus('Errore');
+      if (candidateTask && candidateTask !== loadingTaskRef.current) await candidateTask.destroy().catch(() => undefined);
+      if (loadGeneration === loadGenerationRef.current) {
+        setError(errorMessage(loadError, 'Impossibile aprire questo PDF. Il documento precedente non è stato modificato.'));
+        setStatus('Operazione non completata');
+      }
+      return false;
     } finally {
-      setBusy(false);
+      if (loadGeneration === loadGenerationRef.current) setBusy(false);
     }
   }, [renderThumbnails]);
 
@@ -358,6 +375,7 @@ export function PdfEditor() {
   }, [fontSize]);
 
   useEffect(() => () => {
+    ++loadGenerationRef.current;
     ++thumbnailGenerationRef.current;
     ++renderGenerationRef.current;
     try { renderTaskRef.current?.cancel(); } catch { /* already complete */ }
@@ -365,16 +383,17 @@ export function PdfEditor() {
   }, []);
 
   const mutatePdf = async (mutation: (pdf: PDFDocument) => Promise<void> | void, preferredPage = currentPage) => {
-    if (!bytes) return;
+    if (!bytes || busy) return false;
     setBusy(true);
     setError('');
     try {
       const pdf = await PDFDocument.load(bytes.slice());
       await mutation(pdf);
       const saved = await pdf.save({ useObjectStreams: true });
-      await loadBytes(saved, undefined, preferredPage);
+      return await loadBytes(saved, undefined, preferredPage);
     } catch (mutationError: unknown) {
       setError(errorMessage(mutationError, 'Modifica non riuscita.'));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -394,7 +413,7 @@ export function PdfEditor() {
       setError('Scrivi il testo da aggiungere.');
       return;
     }
-    await mutatePdf(async (pdf) => {
+    const saved = await mutatePdf(async (pdf) => {
       const page = pdf.getPage(currentPage - 1);
       const font = await pdf.embedFont(standardFontFor(fontFamily));
       const color = hexToRgb(fontColor);
@@ -406,6 +425,7 @@ export function PdfEditor() {
         color: rgb(color.red, color.green, color.blue),
       });
     });
+    if (!saved) return;
     setTool('select');
     setStatus('Testo aggiunto. Scarica il PDF quando hai terminato.');
   };
@@ -419,8 +439,8 @@ export function PdfEditor() {
   };
 
   const commitExistingText = async () => {
-    if (!selectedTextBox) return;
-    await mutatePdf(async (pdf) => {
+    if (!selectedTextBox || !visualEditAcknowledged) return;
+    const saved = await mutatePdf(async (pdf) => {
       const page = pdf.getPage(currentPage - 1);
       const font = await pdf.embedFont(standardFontFor(fontFamily));
       const color = hexToRgb(fontColor);
@@ -445,8 +465,10 @@ export function PdfEditor() {
         });
       }
     });
+    if (!saved) return;
+    setHasVisualEdits(true);
     setTool('select');
-    setStatus('Testo sostituito direttamente nel PDF.');
+    setStatus('Modifica visiva applicata. Il testo originale resta recuperabile.');
   };
 
   const downloadPdf = () => {
@@ -497,39 +519,35 @@ export function PdfEditor() {
   };
 
   const compressStrong = async () => {
-    const sourcePdf = pdfDocumentRef.current;
-    if (!bytes || !sourcePdf) return;
+    if (!bytes || busy) return;
     setBusy(true);
     setError('');
+    let strictTask: PDFDocumentLoadingTask | null = null;
     try {
+      // Fresh worker/document: do not reuse partially decoded preview caches.
+      const pdfjs = await importPdfJs();
+      strictTask = pdfjs.getDocument(pdfDocumentOptions(bytes));
+      const sourcePdf = await strictTask.promise;
       const output = await PDFDocument.create();
-      for (let pageNumber = 1; pageNumber <= sourcePdf.numPages; pageNumber += 1) {
-        setStatus(`Compressione forte: pagina ${pageNumber} di ${sourcePdf.numPages}…`);
-        const page = await sourcePdf.getPage(pageNumber);
-        const pageSize = page.getViewport({ scale: 1 });
-        const viewport = page.getViewport({ scale: 1.15 });
+      const saved = await rasterizeChecked(sourcePdf, (width: number, height: number) => {
         const canvas = document.createElement('canvas');
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        const context = canvas.getContext('2d', { alpha: false });
-        if (!context) throw new Error('Canvas non disponibile.');
-        await page.render({ canvas, canvasContext: context, viewport }).promise;
-        const jpeg = await canvasToBlob(canvas, 'image/jpeg', 0.66);
-        const embedded = await output.embedJpg(await jpeg.arrayBuffer());
-        const outputPage = output.addPage([pageSize.width, pageSize.height]);
-        outputPage.drawImage(embedded, { x: 0, y: 0, width: pageSize.width, height: pageSize.height });
-      }
-      const saved = await output.save({ useObjectStreams: true });
+        canvas.width = width;
+        canvas.height = height;
+        return canvas;
+      }, async (canvas: HTMLCanvasElement) => (await canvasToBlob(canvas, 'image/jpeg', 0.66)).arrayBuffer(), output,
+      (pageNumber: number, count: number) => setStatus(`Compressione forte: pagina ${pageNumber} di ${count}…`));
       if (saved.length >= bytes.length) {
         setStatus('La compressione forte non ridurrebbe questo PDF: ho mantenuto l’originale.');
         return;
       }
       const savedPercent = Math.round((1 - saved.length / bytes.length) * 100);
-      await loadBytes(saved, undefined, Math.min(currentPage, output.getPageCount()));
+      if (!await loadBytes(saved, undefined, Math.min(currentPage, output.getPageCount()))) return;
       setStatus(`PDF compresso del ${savedPercent}%. Le pagine sono state rasterizzate.`);
     } catch (compressionError: unknown) {
-      setError(errorMessage(compressionError, 'Compressione forte non riuscita.'));
+      setError(`Compressione interrotta: il PDF precedente è stato conservato. ${errorMessage(compressionError, 'Controlla il documento prima di riprovare.')}`);
+      setStatus('Compressione non applicata');
     } finally {
+      await strictTask?.destroy().catch(() => undefined);
       setBusy(false);
     }
   };
@@ -581,6 +599,10 @@ export function PdfEditor() {
   };
 
   const convertToWord = async () => {
+    if (hasVisualEdits) {
+      setError('Conversione Word bloccata per questo documento: le modifiche visive lasciano il testo originale recuperabile, che verrebbe incluso nel DOCX. Usa un documento senza coperture di testo.');
+      return;
+    }
     const sourcePdf = pdfDocumentRef.current;
     if (!sourcePdf) return;
     setBusy(true);
@@ -637,7 +659,7 @@ export function PdfEditor() {
           >
             <span className="mb-6 grid size-20 place-items-center rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/16 via-blue-500/12 to-fuchsia-400/16 text-cyan-200 shadow-[0_20px_70px_rgba(26,83,255,.2)] transition group-hover:-translate-y-1"><Upload className="size-8" /></span>
             <span className="text-xl font-bold text-white sm:text-2xl">Trascina qui il tuo PDF</span>
-            <span className="mt-2 max-w-md text-sm leading-6 text-slate-400">Modifica testo, comprimi, dividi e converti in Word. Senza account e senza inviare il documento ai nostri server.</span>
+            <span className="mt-2 max-w-md text-sm leading-6 text-slate-400">Aggiungi testo, comprimi, dividi e converti in Word. La modifica del testo esistente è solo visiva: non cancella l’originale. Nessun documento inviato ai nostri server.</span>
             <span className="brand-button mt-7 inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold text-white"><FilePlus2 className="size-4" /> Apri PDF</span>
             {error && <span className="mt-4 text-sm font-medium text-red-300">{error}</span>}
           </button>
@@ -649,8 +671,9 @@ export function PdfEditor() {
   return (
     <div className="editor-shell">
       <EditorTopBar status={status} busy={busy} />
+      <fieldset disabled={busy} className="m-0 min-w-0 border-0 p-0">
       <div className="flex flex-wrap items-center gap-2 border-b border-white/8 bg-[#0b0f1a] px-3 py-2.5">
-        <ToolbarButton active={tool === 'edit'} onClick={() => setActiveTool('edit')} title="Modifica il testo esistente"><PencilLine /><span>Modifica testo</span></ToolbarButton>
+        <ToolbarButton active={tool === 'edit'} onClick={() => setActiveTool('edit')} title="Copri e riscrivi: l’originale resta recuperabile"><PencilLine /><span>Modifica visiva</span></ToolbarButton>
         <ToolbarButton active={tool === 'add'} onClick={() => setActiveTool('add')} title="Aggiungi testo"><Type /><span>Aggiungi testo</span></ToolbarButton>
         <ToolbarButton active={tool === 'compress'} onClick={() => setActiveTool('compress')} title="Comprimi PDF"><FileArchive /><span className="hidden xl:inline">Comprimi</span></ToolbarButton>
         <ToolbarButton active={tool === 'split'} onClick={() => setActiveTool('split')} title="Dividi PDF"><Scissors /><span className="hidden xl:inline">Dividi</span></ToolbarButton>
@@ -670,7 +693,11 @@ export function PdfEditor() {
         <button type="button" onClick={downloadPdf} className="brand-button ml-auto inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-bold text-white sm:text-sm"><ArrowDownToLine className="size-4" /> Scarica PDF</button>
       </div>
 
-      {error && <div className="border-b border-red-300/15 bg-red-400/8 px-4 py-2 text-sm text-red-200">{error}</div>}
+      {error && <div role="alert" className="border-b border-red-300/15 bg-red-400/8 px-4 py-2 text-sm text-red-200">{error}</div>}
+      {(tool === 'edit' || hasVisualEdits) && <div role="note" className="border-b border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
+        <strong>Non è una cancellazione sicura.</strong> Il testo originale viene coperto in bianco, ma rimane nel PDF ed è recuperabile con copia, ricerca o estrazione. Non usare questa funzione per oscurare dati personali o riservati. Il font è sostitutivo e lo sfondo potrebbe essere coperto.
+        {hasVisualEdits && <span className="block">Questo avviso vale anche per il PDF scaricato. La conversione Word è bloccata per evitare l’esportazione del testo coperto.</span>}
+      </div>}
 
       <div className="editor-workspace grid lg:grid-cols-[190px_minmax(0,1fr)_270px]">
         <aside className="hidden min-h-0 overflow-y-auto border-r border-white/8 bg-[#0b0f1a]/75 p-3 lg:block">
@@ -696,7 +723,7 @@ export function PdfEditor() {
 
         <div ref={canvasFrameRef} className="editor-canvas-scroll relative flex min-h-0 items-start justify-center overflow-auto bg-[#171b24] p-3 sm:p-6">
           <div className="relative shrink-0 shadow-[0_24px_80px_rgba(0,0,0,.48)]">
-            <canvas ref={canvasRef} onClick={placeTextDraft} className={tool === 'add' ? 'cursor-text bg-white' : 'bg-white'} />
+            <canvas ref={canvasRef} aria-label={`Anteprima del PDF, pagina ${currentPage} di ${pageCount}`} onClick={placeTextDraft} className={tool === 'add' ? 'cursor-text bg-white' : 'bg-white'} />
             {tool === 'edit' && textBoxes.map((box) => (
               <button
                 key={box.id}
@@ -726,14 +753,15 @@ export function PdfEditor() {
           <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Proprietà</p>
           {tool === 'edit' && (
             <div className="space-y-4">
-              <InfoBox>{selectedTextBox ? 'Modifica il testo e applica. Il carattere viene abbinato alla famiglia rilevata.' : 'Passa sul testo del PDF e clicca la parte che vuoi modificare.'}</InfoBox>
+              <InfoBox>{selectedTextBox ? 'Copri e riscrivi il testo con uno dei tre font disponibili. Il testo originale non viene rimosso e il font esatto non è garantito.' : 'Clicca la scritta da coprire e riscrivere. Non usare questo strumento per nascondere informazioni riservate.'}</InfoBox>
+              <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditAcknowledged(event.target.checked)} className="mt-1.5" />Ho capito: il testo coperto resta recuperabile.</label>
               {selectedTextBox && <>
-                <label className="block text-xs font-semibold text-slate-400">Testo originale
+                <label className="block text-xs font-semibold text-slate-400">Nuovo testo visibile
                   <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50" />
                 </label>
                 <p className="rounded-lg bg-white/[.035] px-3 py-2 text-[11px] leading-5 text-slate-500">Rilevato: {selectedTextBox.fontName} · {selectedTextBox.fontSize.toFixed(1)} pt</p>
                 <TextStyleControls fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
-                <button type="button" onClick={() => void commitExistingText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white"><Check className="mr-2 inline size-4" />Applica modifica</button>
+                <button type="button" disabled={!visualEditAcknowledged} onClick={() => void commitExistingText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:opacity-40"><Check className="mr-2 inline size-4" />Applica modifica visiva</button>
               </>}
             </div>
           )}
@@ -746,7 +774,7 @@ export function PdfEditor() {
           )}
           {tool === 'compress' && (
             <div className="space-y-4">
-              <InfoBox>La modalità standard conserva testo e qualità. Quella forte riduce maggiormente, ma trasforma le pagine in immagini.</InfoBox>
+              <InfoBox>La modalità standard conserva testo e qualità. Quella forte trasforma le pagine in immagini: perde testo selezionabile, link, moduli e altre funzioni interattive. Se un’immagine non viene decodificata, la compressione viene interrotta. Controlla sempre il risultato.</InfoBox>
               <button type="button" onClick={() => void compressLossless()} className="h-11 w-full rounded-xl border border-white/10 bg-white/[.045] text-sm font-semibold text-white hover:bg-white/[.08]">Ottimizza senza perdita</button>
               <button type="button" onClick={() => void compressStrong()} className="brand-button h-11 w-full rounded-xl text-sm font-bold text-white">Comprimi forte</button>
             </div>
@@ -766,12 +794,13 @@ export function PdfEditor() {
             <div className="space-y-3 text-sm text-slate-400">
               <p className="font-semibold text-white">{fileName}</p>
               <p>Pagina {currentPage} di {pageCount}</p>
-              <div className="rounded-xl border border-emerald-300/15 bg-emerald-300/[.05] p-3 text-xs leading-5 text-emerald-100/65">Il documento resta nel browser. Usa “Modifica testo” per selezionare direttamente le scritte.</div>
+              <div className="rounded-xl border border-emerald-300/15 bg-emerald-300/[.05] p-3 text-sm leading-6 text-emerald-100/75">Il documento resta nel browser. “Modifica visiva” copre le scritte senza eliminarle. Anche la conversione Word può recuperare testo nascosto presente nel PDF.</div>
               <a href={SOURCE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-300 hover:text-cyan-200">Consulta il codice sorgente <ChevronDown className="size-3 -rotate-90" /></a>
             </div>
           )}
         </aside>
       </div>
+      </fieldset>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/8 bg-[#090d17] px-4 py-2 text-[11px] text-slate-500">
         <span>{fileName} · {pageCount} {pageCount === 1 ? 'pagina' : 'pagine'}</span>
         <span>Elaborazione locale · Per OCR, firme e font incorporati usa <a className="text-cyan-300 hover:text-cyan-200" href={RELEASE_URL}>l’app Mac</a></span>
@@ -809,7 +838,7 @@ function EditorTopBar({ status, busy }: { status: string; busy: boolean }) {
   return (
     <div className="editor-toolbar">
       <div className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-[#ff5f57]" /><span className="size-2.5 rounded-full bg-[#febc2e]" /><span className="size-2.5 rounded-full bg-[#28c840]" /></div>
-      <div className="hidden items-center gap-2 rounded-lg border border-white/8 bg-white/[.035] px-3 py-1.5 text-xs text-slate-400 sm:flex">{busy ? <LoaderCircle className="size-3.5 animate-spin text-cyan-300" /> : <span className="size-2 rounded-full bg-emerald-400" />}{status}</div>
+      <output aria-live="polite" className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[.035] px-3 py-1.5 text-sm text-slate-400">{busy ? <LoaderCircle className="size-3.5 animate-spin text-cyan-300" /> : <span className="size-2 rounded-full bg-emerald-400" />}{status}</output>
       <span className="text-xs font-medium text-slate-500">Nessun upload</span>
     </div>
   );

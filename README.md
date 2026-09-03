@@ -13,6 +13,14 @@ testo, gestione pagine, compressione, estrazione/divisione in ZIP e conversione
 del testo in DOCX. La conversione Word privilegia il contenuto modificabile e
 può richiedere correzioni nei documenti con impaginazioni complesse.
 
+**La modifica visiva non è redazione sicura.** Copre le scritte in bianco e
+aggiunge un font sostitutivo: l'originale resta ricercabile, copiabile ed
+estraibile. L'editor mostra un avviso persistente e richiede una conferma.
+Dopo una copertura effettuata nella sessione la conversione Word è bloccata
+per evitare di esportare anche il testo coperto. Non è possibile riconoscere
+con certezza coperture già presenti in un PDF importato: non usarlo per
+nascondere dati riservati.
+
 ## Sviluppo
 
 ```sh
@@ -24,6 +32,20 @@ npm run lint
 npm run build
 npm run dev
 ```
+
+`predev`, `prebuild` e `pretest` copiano dal pacchetto PDF.js bloccato nel
+lockfile il worker, WASM/fallback JS, CMaps, font standard, profili ICC e
+relative licenze. Le cartelle generate `public/pdfjs/` non vanno committate:
+sono riproducibili con `npm run sync:pdfjs` e incluse nel sito compilato.
+La modifica della versione PDF.js richiede la revisione e riesecuzione dei
+test del controllo immagini in `pdf/runtime.mjs`.
+
+`npm test` comprende smoke test di PDF/ZIP/DOCX e regressioni con immagini
+JPX/JBIG2 sintetiche, codec mancanti, immagini corrotte e pagine sovradimensionate.
+I controlli di rendering usano PDF.js con canvas in Node, non sono una suite
+end-to-end nei browser. Errori attesi dei decoder vengono stampati nei test
+negativi. La compressione forte conserva il documento precedente quando
+questi controlli falliscono; non promette fedeltà perfetta né redazione sicura.
 
 ## Architettura privacy-first
 

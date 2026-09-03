@@ -36,6 +36,7 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/public/pdfjs/
 
 # Unused scaffold components are kept locally but excluded from the clean source repository
 /components/ui/

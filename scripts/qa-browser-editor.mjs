@@ -3,6 +3,9 @@ import { Document as WordDocument, Packer, PageBreak, Paragraph, TextRun } from 
 import JSZip from 'jszip';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { pdfDocumentOptions } from '../pdf/runtime.mjs';
+
+const options = (data) => ({ ...pdfDocumentOptions(data, `${import.meta.dirname}/../public/pdfjs/`), useWorkerFetch: false });
 
 const source = await PDFDocument.create();
 const sourcePage = source.addPage([595, 842]);
@@ -27,7 +30,7 @@ const [duplicate] = await edited.copyPages(edited, [0]);
 edited.addPage(duplicate);
 
 const outputBytes = await edited.save();
-const loadingTask = getDocument({ data: outputBytes.slice() });
+const loadingTask = getDocument(options(outputBytes));
 const rendered = await loadingTask.promise;
 assert.equal(rendered.numPages, 3, 'La duplicazione deve produrre tre pagine');
 const firstPage = await rendered.getPage(1);
@@ -42,7 +45,7 @@ const extractedPdf = await PDFDocument.create();
 const [extractedPage] = await extractedPdf.copyPages(splitSource, [1]);
 extractedPdf.addPage(extractedPage);
 const extractedBytes = await extractedPdf.save({ useObjectStreams: true });
-const extractedRender = getDocument({ data: extractedBytes.slice() });
+const extractedRender = getDocument(options(extractedBytes));
 const extractedDocument = await extractedRender.promise;
 assert.equal(extractedDocument.numPages, 1, 'L’estrazione deve produrre una sola pagina');
 const extractedText = await (await extractedDocument.getPage(1)).getTextContent();
