@@ -40,12 +40,22 @@ disclaims being a professional opinion; retain that distinction.
   rules. Have the reviewer assess the actual service, audience and data use;
   preserve mandatory rights and keep AGPL disclaimers separate from terms.
 
+## Owner-supplied contact details — 3 September 2026
+
+The owner authorized displaying Tomorrow Now S.r.l., Corso Galileo Ferraris 53,
+10128 Torino, and info@tomorrownow.tech. The web legal pages and footer now use
+one shared record in `legal/company.mjs`. VAT number and PEC remain explicitly
+“da definire”; no identifiers, registration status or legal-review approval
+have been invented. This updates the existing owner-only preview and public
+web source, not site access, desktop binaries or third-party attribution.
+
 ## Still required before public launch
 
-1. Confirm the rights holder, controller's legal identity and operational public
-   email/contact address; then update NOTICE, first-party attribution and
-   privacy details consistently. Copyright holder and data controller need not
-   be the same person/entity: check rather than infer.
+1. Complete and verify the supplied corporate details (including the pending
+   VAT number and PEC) and confirm the rights holder separately before updating
+   NOTICE and first-party attribution. Copyright holder and data controller
+   need not be the same person/entity: check rather than infer. Verify that the
+   supplied public email is operational and requests can be handled.
 2. Resolve inventory entries marked `notice-text-review-required`, check bundled
    and native components and preserve the exact notices for every shipped build.
    For the Mac release include Python's complete license set, Electron's

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { WEB_SOURCE_URL } from '@/legal/source';
+import { CompanyDetails } from '@/components/company-details';
 
 export function LegalPage({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
   return (
@@ -16,7 +17,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: st
           <h1>{title}</h1>
           <p className="legal-lead">{intro}</p>
           <div className="my-7 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100/80">
-            Bozza pre-lancio: identità completa del titolare, recapiti e formulazioni devono essere validati da un professionista prima della pubblicazione definitiva.
+            Bozza pre-lancio: partita IVA e PEC sono ancora da definire. I dati societari e i testi legali devono essere completati e validati da un professionista prima della pubblicazione definitiva.
           </div>
           {children}
         </article>
@@ -26,6 +27,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: st
           <Link href="/licenses" className="hover:text-white">Licenze</Link>
           <a href={WEB_SOURCE_URL} className="hover:text-white">Sorgente di questa versione web</a>
         </div>
+        <CompanyDetails className="border-t border-white/8 py-6 text-xs text-slate-400" />
       </div>
     </main>
   );

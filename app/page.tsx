@@ -15,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { PdfEditor } from '@/components/pdf-editor';
+import { CompanyDetails } from '@/components/company-details';
 import { WEB_SOURCE_URL } from '@/legal/source';
 
 const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
@@ -150,6 +151,10 @@ export default function Home() {
             <a href={SOURCE_URL} className="hover:text-white">Codice sorgente</a>
             <a href="https://www.tomorrownow.tech" className="hover:text-white">Tomorrow Now</a>
           </div>
+        </div>
+        <div className="mx-auto mt-6 max-w-[1480px] text-xs text-slate-400">
+          <CompanyDetails />
+          <p className="mt-3 text-amber-100/70">Anteprima pre-lancio: dati societari e testi legali da completare e sottoporre a revisione professionale.</p>
         </div>
       </footer>
     </main>
