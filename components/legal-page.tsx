@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { WEB_SOURCE_URL } from '@/legal/source';
 
 export function LegalPage({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
   return (
@@ -23,7 +24,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: st
           <Link href="/privacy" className="hover:text-white">Privacy</Link>
           <Link href="/terms" className="hover:text-white">Termini</Link>
           <Link href="/licenses" className="hover:text-white">Licenze</Link>
-          <a href="https://github.com/Trader855/PDF" className="hover:text-white">Sorgente</a>
+          <a href={WEB_SOURCE_URL} className="hover:text-white">Sorgente di questa versione web</a>
         </div>
       </div>
     </main>

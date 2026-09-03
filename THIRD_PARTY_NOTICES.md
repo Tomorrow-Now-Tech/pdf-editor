@@ -7,6 +7,11 @@
 | docx | 9.7.1 | MIT | <https://docx.js.org/> |
 | JSZip | 3.10.1 | MIT | <https://stuk.github.io/jszip/> |
 | React | 19.2.8 | MIT | <https://react.dev/> |
+| react-server-dom-webpack | 19.2.8 | MIT | <https://github.com/facebook/react> |
+| vinext | 1.0.0-beta.9 | MIT | <https://github.com/cloudflare/vinext> |
+| Wrangler (toolchain) | 4.128.0 | MIT OR Apache-2.0 (package metadata) | <https://github.com/cloudflare/workers-sdk> |
+| @cloudflare/vite-plugin (toolchain) | 1.54.3 | MIT (package metadata) | <https://github.com/cloudflare/workers-sdk> |
+| @openai/sites-vite-plugin (toolchain) | 0.2.0 | MIT (installed package) | npm package in lockfile |
 | Lucide | 1.31.0 | ISC | <https://lucide.dev/> |
 | Tailwind CSS | 4.2.1 | MIT | <https://tailwindcss.com/> |
 
@@ -27,3 +32,12 @@ for this project and contain no user PDFs or third-party document contents.
 This list covers the primary runtime components. Exact transitive versions are
 recorded in `package-lock.json`; upstream packages retain their own copyright
 and license notices.
+
+`npm run legal:generate` collects installed npm package license/notice texts
+without changing the originals, plus a lockfile-hashed inventory. Both are
+included in the built site's `/legal/` directory and linked from `/licenses`.
+The report records missing license text explicitly. A package's license field
+alone is not a substitute for its required copyright/notice text. Bundled and
+native code, including workerd/Chromium or other nested dependencies, can
+require notices beyond the npm package root and still needs manual review.
+Build-tool entries do not imply that those entire tools run in the browser.

@@ -2,18 +2,20 @@
   "name": "sites-project",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
     "sync:pdfjs": "node scripts/sync-pdfjs-assets.mjs",
-    "predev": "npm run sync:pdfjs",
-    "prebuild": "npm run sync:pdfjs",
-    "pretest": "npm run sync:pdfjs",
+    "legal:generate": "node scripts/generate-license-notices.mjs",
+    "predev": "npm run sync:pdfjs && npm run legal:generate",
+    "prebuild": "npm run sync:pdfjs && npm run legal:generate",
+    "pretest": "npm run sync:pdfjs && npm run legal:generate",
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "test": "node scripts/qa-browser-editor.mjs && node --test scripts/pdf-safety.test.mjs",
+    "test": "node scripts/qa-browser-editor.mjs && node --test scripts/pdf-safety.test.mjs scripts/legal-resources.test.mjs",
     "lint": "oxlint app components/pdf-editor.tsx components/legal-page.tsx --ignore-pattern 'components/ui/**'",
     "typecheck": "tsc --noEmit --incremental false",
     "format": "oxfmt"

@@ -29,6 +29,7 @@ cd pdf-editor-web
 npm ci
 npm test
 npm run lint
+npm run typecheck
 npm run build
 npm run dev
 ```
@@ -58,6 +59,21 @@ questi controlli falliscono; non promette fedeltà perfetta né redazione sicura
 
 La pubblicazione definitiva richiede la revisione professionale delle pagine
 privacy, termini e licenze presenti in `app/`.
+
+## Provenienza e avvisi legali
+
+La build di produzione richiede un checkout Git pulito e include il suo commit
+nei collegamenti al sorgente e nel file pubblico `source-version.json`.
+Per compilare modifiche proprie, prima eseguire i test e creare un commit.
+Prima della distribuzione, pubblicare quel commit nel repository indicato
+(o adattare i collegamenti al proprio repository per una versione derivata).
+Non usare il commit di una versione precedente per descrivere una build nuova.
+
+`npm run legal:generate` raccoglie le licenze disponibili nei pacchetti
+installati e produce un inventario verificabile anche degli avvisi mancanti.
+Non sostituisce la revisione delle librerie native/incorporate. Le decisioni
+aperte e le precisazioni alla revisione ricevuta sono in
+[`LEGAL_REVIEW_FOLLOW_UP.md`](LEGAL_REVIEW_FOLLOW_UP.md).
 
 ## Licenza
 

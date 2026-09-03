@@ -15,9 +15,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { PdfEditor } from '@/components/pdf-editor';
+import { WEB_SOURCE_URL } from '@/legal/source';
 
 const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
-const SOURCE_URL = 'https://github.com/Trader855/PDF/tree/web';
+const SOURCE_URL = WEB_SOURCE_URL;
 
 export default function Home() {
   return (

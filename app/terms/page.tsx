@@ -18,11 +18,12 @@ export default function TermsPage() {
 
       <h2>5. Garanzie e responsabilità</h2>
       <p>Il software è fornito senza garanzie ulteriori rispetto a quelle inderogabili previste dalla legge. Limitazioni di responsabilità, legge applicabile, foro e disciplina consumer saranno definite soltanto dopo la revisione professionale.</p>
+      <p>La licenza AGPL disciplina i diritti sul software. Questi termini riguardano invece l’uso del servizio: il richiamo alla licenza non sostituisce le tutele inderogabili applicabili né costituisce una rinuncia ai diritti dell’utente.</p>
 
       <h2>6. Marchi e assenza di affiliazione</h2>
       <p>Tomorrow Now PDF Editor è un progetto indipendente. Non è affiliato, sponsorizzato o approvato da Adobe Inc. o Apple Inc.</p>
 
-      <p className="legal-date">Bozza aggiornata il 2 settembre 2026.</p>
+      <p className="legal-date">Bozza aggiornata il 3 settembre 2026. Legge applicabile, foro e clausole di responsabilità restano soggetti a revisione professionale.</p>
     </LegalPage>
   );
 }

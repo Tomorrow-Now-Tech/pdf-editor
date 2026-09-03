@@ -24,6 +24,7 @@ import {
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
+import { WEB_SOURCE_URL } from '@/legal/source';
 
 type FontFamily = 'Helvetica' | 'Times' | 'Courier';
 type ToolMode = 'select' | 'add' | 'edit' | 'compress' | 'split';
@@ -62,7 +63,7 @@ type PdfTextItem = {
   transform: number[];
 };
 
-const SOURCE_URL = 'https://github.com/Trader855/PDF/tree/web';
+const SOURCE_URL = WEB_SOURCE_URL;
 const RELEASE_URL = 'https://github.com/Trader855/PDF/releases/latest';
 
 async function importPdfJs() {
