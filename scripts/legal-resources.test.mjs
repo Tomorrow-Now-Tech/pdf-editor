@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readSourceRevision, sourceProvenancePlugin } from './source-provenance.mjs';
-import { COMPANY } from '../legal/company.mjs';
+import { COMPANY, PENDING_COMPANY_DETAIL } from '../legal/company.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 
@@ -16,9 +16,10 @@ test('operator details preserve the supplied contact and mark unknown identifier
   assert.equal(COMPANY.email, 'info@tomorrownow.tech');
   assert.equal(COMPANY.vat, null);
   assert.equal(COMPANY.pec, null);
+  assert.equal(PENDING_COMPANY_DETAIL, '(in fase di emissione)');
   const component = await readFile(`${root}/components/company-details.tsx`, 'utf8');
-  assert.ok(component.includes("COMPANY.vat ?? 'da definire'"));
-  assert.ok(component.includes("COMPANY.pec") && component.includes("'da definire'"));
+  assert.ok(component.includes('COMPANY.vat ?? PENDING_COMPANY_DETAIL'));
+  assert.ok(component.includes('COMPANY.pec') && component.includes(': PENDING_COMPANY_DETAIL'));
   for (const path of ['app/page.tsx', 'app/privacy/page.tsx', 'app/terms/page.tsx', 'components/legal-page.tsx']) {
     assert.ok((await readFile(`${root}/${path}`, 'utf8')).includes('<CompanyDetails'), path);
   }

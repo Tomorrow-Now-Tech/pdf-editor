@@ -17,7 +17,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: st
           <h1>{title}</h1>
           <p className="legal-lead">{intro}</p>
           <div className="my-7 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100/80">
-            Bozza pre-lancio: partita IVA e PEC sono ancora da definire. I dati societari e i testi legali devono essere completati e validati da un professionista prima della pubblicazione definitiva.
+            Informazioni in aggiornamento: partita IVA e PEC sono indicate come “in fase di emissione”. I dati societari e i testi legali restano da completare e sottoporre a revisione professionale.
           </div>
           {children}
         </article>

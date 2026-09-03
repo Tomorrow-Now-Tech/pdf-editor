@@ -49,7 +49,17 @@ one shared record in `legal/company.mjs`. VAT number and PEC remain explicitly
 have been invented. This updates the existing owner-only preview and public
 web source, not site access, desktop binaries or third-party attribution.
 
-## Still required before public launch
+## Requested public beta — 3 September 2026
+
+The owner subsequently authorized public publication and requested the visible
+label “(in fase di emissione)” for both pending identifiers. Their actual values
+remain null. Public-facing copy no longer describes the live site as owner-only.
+This access decision does not establish that a professional review occurred or
+close the outstanding checks below; the visible legal-completion notice remains.
+The intended custom hostname is `pdf.tomorrownow.tech`; DNS/HTTPS activation must
+be verified separately before advertising it as available.
+
+## Outstanding legal and distribution checks
 
 1. Complete and verify the supplied corporate details (including the pending
    VAT number and PEC) and confirm the rights holder separately before updating
@@ -62,9 +72,9 @@ web source, not site access, desktop binaries or third-party attribution.
    Chromium/Node notices and the actual MuPDF native dependency set. Do not
    infer a complete list from package metadata or a proposed build alone.
 3. Verify the final hosting contract, roles, subprocessors, logs, retention,
-   transfers and cookie/storage inventory, including the reserved preview's
-   authentication. The preview remains owner-only, not the intended accountless
-   public service.
+   transfers and cookie/storage inventory, including authentication on any
+   reserved previews. Verify the public service's unauthenticated behavior
+   separately from the access-controlled development environment.
 4. Complete lawful bases, rights/contact handling and terms (including consumer
    jurisdiction and liability rules) with a qualified professional. Record the
    professional's written approval and which exact source/release it covers.

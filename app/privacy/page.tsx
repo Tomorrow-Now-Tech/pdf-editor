@@ -7,15 +7,15 @@ export default function PrivacyPage() {
     <LegalPage title="Informativa privacy" intro="Informazioni preliminari sulla versione browser, sull’app Mac e sui contatti di assistenza.">
       <h2>1. Titolare del trattamento</h2>
       <CompanyDetails className="my-5" />
-      <p>I dati sopra riportati sono quelli comunicati per questa anteprima. Partita IVA e PEC sono ancora da definire; l’anagrafica completa e l’informativa restano da verificare prima del lancio pubblico. Il marchio del servizio è Tomorrow Now.</p>
+      <p>I dati sopra riportati sono quelli comunicati dal gestore. Partita IVA e PEC sono indicate come “in fase di emissione” e saranno aggiornate quando disponibili; l’anagrafica completa e l’informativa restano da verificare. Il marchio del servizio è Tomorrow Now.</p>
 
       <h2>2. Contenuto dei PDF</h2>
       <p>La versione browser apre e modifica i documenti nella memoria del dispositivo dell’utente. Il codice dell’editor non invia a Tomorrow Now il contenuto dei PDF selezionati e non richiede un account.</p>
-      <p>L’editor non gestisce un account proprio. L’attuale anteprima riservata è però protetta dall’accesso del servizio di hosting: questo accesso tecnico va distinto dalla futura versione pubblica senza registrazione.</p>
+      <p>La versione pubblica dell’editor è accessibile senza registrazione. L’editor non gestisce un account proprio; eventuali anteprime riservate possono invece richiedere l’accesso del servizio di hosting.</p>
 
       <h2>3. Dati tecnici di accesso</h2>
-      <p>Il fornitore di hosting e rete può trattare indirizzo IP, data e ora, URL richiesto, user agent, informazioni di sicurezza e diagnostica per erogare e proteggere il sito. Prima del lancio verranno indicati fornitore, tempi di conservazione, base giuridica, eventuali trasferimenti e accordi applicabili.</p>
-      <p>Questa anteprima usa Sites e una distribuzione su Cloudflare Workers. La configurazione tecnica non dimostra da sola quali siano i ruoli privacy, il contratto applicabile o la localizzazione dei dati. Responsabili e sub-responsabili, accordi, conservazione e garanzie per eventuali trasferimenti extra SEE devono essere verificati sulla configurazione e sui contratti effettivi prima del lancio.</p>
+      <p>Il fornitore di hosting e rete può trattare indirizzo IP, data e ora, URL richiesto, user agent, informazioni di sicurezza e diagnostica per erogare e proteggere il sito. Tempi di conservazione, base giuridica, eventuali trasferimenti e accordi applicabili restano da completare in questa informativa.</p>
+      <p>Il sito usa Sites e una distribuzione su Cloudflare Workers. La configurazione tecnica non dimostra da sola quali siano i ruoli privacy, il contratto applicabile o la localizzazione dei dati. Responsabili e sub-responsabili, accordi, conservazione e garanzie per eventuali trasferimenti extra SEE restano da verificare sulla configurazione e sui contratti effettivi.</p>
 
       <h2>4. Cookie e strumenti di tracciamento</h2>
       <p>La configurazione iniziale non prevede analytics, pubblicità comportamentale o cookie non necessari. Se in futuro saranno aggiunti strumenti ulteriori, questa informativa e l’eventuale meccanismo di consenso verranno aggiornati prima dell’attivazione.</p>
@@ -32,9 +32,9 @@ export default function PrivacyPage() {
       <p>Il controllo degli aggiornamenti contatta GitHub dopo l’avvio e quando viene richiesto dall’utente. Queste richieste comunicano almeno l’indirizzo IP e dati tecnici della connessione al fornitore; non sono un caricamento del documento. Anche i link al sorgente, ai download e al sito Tomorrow Now aprono servizi con proprie informative. Consulta l’<a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">informativa GitHub</a>.</p>
 
       <h2>8. Assistenza e segnalazioni di sicurezza</h2>
-      <p>Per assistenza e segnalazioni puoi contattare {COMPANY.name} a <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>. Se invii una richiesta o una segnalazione, il destinatario riceve il tuo indirizzo email, il contenuto del messaggio e gli eventuali allegati. Non allegare PDF di clienti, firme o altri dati riservati: usa esempi sintetici o privi di dati personali. Finalità, base giuridica, modalità di gestione e tempi di conservazione di questo canale devono essere completati e confermati prima del lancio.</p>
+      <p>Per assistenza e segnalazioni puoi contattare {COMPANY.name} a <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>. Se invii una richiesta o una segnalazione, il destinatario riceve il tuo indirizzo email, il contenuto del messaggio e gli eventuali allegati. Non allegare PDF di clienti, firme o altri dati riservati: usa esempi sintetici o privi di dati personali. Finalità, base giuridica, modalità di gestione e tempi di conservazione di questo canale restano da completare e confermare.</p>
 
-      <p className="legal-date">Bozza aggiornata il 3 settembre 2026. Questa pagina non è ancora un’informativa definitiva per il lancio pubblico.</p>
+      <p className="legal-date">Aggiornata il 3 settembre 2026. Informativa ancora da completare e sottoporre a revisione professionale.</p>
     </LegalPage>
   );
 }

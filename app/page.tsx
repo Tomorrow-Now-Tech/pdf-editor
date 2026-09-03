@@ -154,7 +154,7 @@ export default function Home() {
         </div>
         <div className="mx-auto mt-6 max-w-[1480px] text-xs text-slate-400">
           <CompanyDetails />
-          <p className="mt-3 text-amber-100/70">Anteprima pre-lancio: dati societari e testi legali da completare e sottoporre a revisione professionale.</p>
+          <p className="mt-3 text-amber-100/70">Versione beta · Dati societari e informazioni legali in aggiornamento.</p>
         </div>
       </footer>
     </main>
