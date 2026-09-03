@@ -77,12 +77,12 @@ export default function Home() {
 
           <PdfEditor />
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Capability icon={<PencilLine />} title="Modifica visiva" text="Copri e riscrivi con un font sostitutivo. L’originale resta recuperabile: non è redazione sicura." />
-            <Capability icon={<FileArchive />} title="Comprimi PDF" text="Ottimizzazione senza perdita oppure riduzione forte del peso." />
-            <Capability icon={<Scissors />} title="Dividi pagine" text="Estrai un intervallo o crea uno ZIP con le singole pagine." />
-            <Capability icon={<FileText />} title="PDF in Word" text="Estrai il testo in un documento DOCX realmente modificabile." />
-          </div>
+          <nav aria-label="Strumenti PDF" className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Capability href="/modifica-pdf" icon={<PencilLine />} title="Modifica visiva" text="Copri e riscrivi con un font sostitutivo. L’originale resta recuperabile: non è redazione sicura." />
+            <Capability href="/comprimi-pdf" icon={<FileArchive />} title="Comprimi PDF" text="Ottimizzazione senza perdita oppure riduzione forte del peso." />
+            <Capability href="/dividi-pdf" icon={<Scissors />} title="Dividi pagine" text="Estrai un intervallo o crea uno ZIP con le singole pagine." />
+            <Capability href="/pdf-in-word" icon={<FileText />} title="PDF in Word" text="Estrai il testo in un documento DOCX realmente modificabile." />
+          </nav>
         </div>
       </section>
 
@@ -181,14 +181,14 @@ function FeatureCard({ icon, title, text }: { icon: React.ReactNode; title: stri
   );
 }
 
-function Capability({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function Capability({ href, icon, title, text }: { href: string; icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="flex gap-3 rounded-2xl border border-white/8 bg-white/[.025] p-4">
+    <Link href={href} className="flex gap-3 rounded-2xl border border-white/8 bg-white/[.025] p-4 transition hover:border-cyan-300/40 hover:bg-white/[.05]">
       <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-cyan-300/15 bg-cyan-300/[.07] text-cyan-200 [&_svg]:size-5">{icon}</span>
       <div>
         <h3 className="text-sm font-bold text-white">{title}</h3>
         <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
       </div>
-    </div>
+    </Link>
   );
 }

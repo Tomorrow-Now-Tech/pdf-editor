@@ -28,7 +28,7 @@ import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
 type FontFamily = 'Helvetica' | 'Times' | 'Courier';
-type ToolMode = 'select' | 'add' | 'edit' | 'compress' | 'split';
+type ToolMode = 'select' | 'add' | 'edit' | 'compress' | 'split' | 'word';
 
 type DraftText = {
   screenX: number;
@@ -125,7 +125,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) 
   });
 }
 
-export function PdfEditor() {
+export function PdfEditor({ initialTool = 'select', uploadHint }: { initialTool?: ToolMode; uploadHint?: string } = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasFrameRef = useRef<HTMLDivElement>(null);
@@ -150,7 +150,7 @@ export function PdfEditor() {
   const [status, setStatus] = useState('Pronto');
   const [error, setError] = useState('');
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [tool, setTool] = useState<ToolMode>('select');
+  const [tool, setTool] = useState<ToolMode>(initialTool);
   const [draft, setDraft] = useState<DraftText | null>(null);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
@@ -660,7 +660,7 @@ export function PdfEditor() {
           >
             <span className="mb-6 grid size-20 place-items-center rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-300/16 via-blue-500/12 to-fuchsia-400/16 text-cyan-200 shadow-[0_20px_70px_rgba(26,83,255,.2)] transition group-hover:-translate-y-1"><Upload className="size-8" /></span>
             <span className="text-xl font-bold text-white sm:text-2xl">Trascina qui il tuo PDF</span>
-            <span className="mt-2 max-w-md text-sm leading-6 text-slate-400">Aggiungi testo, comprimi, dividi e converti in Word. La modifica del testo esistente è solo visiva: non cancella l’originale. Nessun documento inviato ai nostri server.</span>
+            <span className="mt-2 max-w-md text-sm leading-6 text-slate-400">{uploadHint || 'Aggiungi testo, comprimi, dividi e converti in Word. La modifica del testo esistente è solo visiva: non cancella l’originale. Nessun documento inviato ai nostri server.'}</span>
             <span className="brand-button mt-7 inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold text-white"><FilePlus2 className="size-4" /> Apri PDF</span>
             {error && <span className="mt-4 text-sm font-medium text-red-300">{error}</span>}
           </button>
@@ -678,7 +678,7 @@ export function PdfEditor() {
         <ToolbarButton active={tool === 'add'} onClick={() => setActiveTool('add')} title="Aggiungi testo"><Type /><span>Aggiungi testo</span></ToolbarButton>
         <ToolbarButton active={tool === 'compress'} onClick={() => setActiveTool('compress')} title="Comprimi PDF"><FileArchive /><span className="hidden xl:inline">Comprimi</span></ToolbarButton>
         <ToolbarButton active={tool === 'split'} onClick={() => setActiveTool('split')} title="Dividi PDF"><Scissors /><span className="hidden xl:inline">Dividi</span></ToolbarButton>
-        <ToolbarButton onClick={() => void convertToWord()} title="Converti PDF in Word"><FileText /><span className="hidden xl:inline">PDF in Word</span></ToolbarButton>
+        <ToolbarButton active={tool === 'word'} onClick={() => setActiveTool('word')} title="Converti PDF in Word"><FileText /><span className="hidden xl:inline">PDF in Word</span></ToolbarButton>
         <span className="mx-1 hidden h-6 w-px bg-white/10 sm:block" />
         <ToolbarButton onClick={() => void mutatePdf((pdf) => {
           const page = pdf.getPage(currentPage - 1);
@@ -789,6 +789,13 @@ export function PdfEditor() {
               </div>
               <button type="button" onClick={() => void downloadSplitRange()} className="brand-button h-11 w-full rounded-xl text-sm font-bold text-white">Scarica intervallo</button>
               <button type="button" onClick={() => void downloadPagesZip()} className="h-11 w-full rounded-xl border border-white/10 bg-white/[.045] text-sm font-semibold text-white hover:bg-white/[.08]">Dividi tutte in ZIP</button>
+            </div>
+          )}
+          {tool === 'word' && (
+            <div className="space-y-4">
+              <InfoBox>Estrae il testo selezionabile in DOCX. Non include OCR, immagini o ricostruzione fedele di tabelle, font e impaginazione. Il testo nascosto nel PDF può essere incluso: non usare documenti oscurati soltanto in modo visivo.</InfoBox>
+              {hasVisualEdits && <p role="note" className="text-sm leading-6 text-amber-100">Conversione bloccata: questo documento contiene modifiche visive effettuate nella sessione.</p>}
+              <button type="button" disabled={hasVisualEdits} onClick={() => void convertToWord()} className="brand-button h-11 w-full rounded-xl text-sm font-bold text-white disabled:opacity-40">Scarica Word</button>
             </div>
           )}
           {tool === 'select' && (

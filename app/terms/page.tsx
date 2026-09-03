@@ -1,4 +1,7 @@
 import { LegalPage } from '@/components/legal-page';
+import { pageMetadata } from '@/seo/site.mjs';
+
+export const metadata = pageMetadata('/terms', 'Termini di utilizzo | Tomorrow Now PDF Editor', 'Condizioni di utilizzo, limiti delle funzioni PDF, versione beta e responsabilità di verifica dei documenti prodotti.');
 import { CompanyDetails } from '@/components/company-details';
 
 export default function TermsPage() {

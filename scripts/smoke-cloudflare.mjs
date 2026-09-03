@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { readSourceRevision } from './source-provenance.mjs';
 import { SOURCE_REPOSITORY } from '../legal/source-config.mjs';
 import { MAC_DMG_DOWNLOAD_URL } from '../downloads/mac.mjs';
+import { assertSeo } from './assert-seo.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const revision = readSourceRevision(root, true);
@@ -63,6 +64,7 @@ try {
     assert.deepEqual(Buffer.from(await response.arrayBuffer()), await readFile(`${root}/public/${path}`), path);
   }
   assert.equal((await get('/not-a-real-pdf-editor-page')).status, 404);
+  await assertSeo(get);
   console.log('Cloudflare Worker smoke passed: anonymous pages, source, PDF decoders, fonts, licenses and 404.');
 } finally {
   child.kill('SIGTERM');

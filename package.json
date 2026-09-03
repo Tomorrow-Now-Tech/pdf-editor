@@ -20,8 +20,8 @@
     "ci:cloudflare": "npm run lint && npm run typecheck && npm test && npm run build:cloudflare && npm run check:cloudflare && npm run test:cloudflare",
     "deploy:cloudflare": "npm run check:cloudflare && wrangler deploy --config dist/server/wrangler.json",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "test": "node scripts/qa-browser-editor.mjs && node --test scripts/pdf-safety.test.mjs scripts/legal-resources.test.mjs",
-    "lint": "oxlint app components/pdf-editor.tsx components/legal-page.tsx components/company-details.tsx legal --ignore-pattern 'components/ui/**'",
+    "test": "node scripts/qa-browser-editor.mjs && node --test scripts/pdf-safety.test.mjs scripts/legal-resources.test.mjs scripts/seo.test.mjs",
+    "lint": "oxlint app components/pdf-editor.tsx components/legal-page.tsx components/company-details.tsx components/seo-tool-page.tsx legal seo --ignore-pattern 'components/ui/**'",
     "typecheck": "tsc --noEmit --incremental false",
     "format": "oxfmt"
   },

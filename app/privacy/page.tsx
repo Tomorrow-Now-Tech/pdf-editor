@@ -2,6 +2,9 @@ import { LegalPage } from '@/components/legal-page';
 import { CompanyDetails } from '@/components/company-details';
 import { COMPANY } from '@/legal/company.mjs';
 import { WEB_HOSTING_DESCRIPTION } from '@/legal/hosting';
+import { pageMetadata } from '@/seo/site.mjs';
+
+export const metadata = pageMetadata('/privacy', 'Privacy | Tomorrow Now PDF Editor', 'Come il PDF Editor elabora i documenti sul dispositivo, quali dati tecnici possono essere trattati e come contattare il gestore.');
 
 export default function PrivacyPage() {
   return (

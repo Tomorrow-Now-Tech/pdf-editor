@@ -1,4 +1,7 @@
 import { LegalPage } from '@/components/legal-page';
+import { pageMetadata } from '@/seo/site.mjs';
+
+export const metadata = pageMetadata('/licenses', 'Licenze e codice sorgente | Tomorrow Now PDF Editor', 'Licenza AGPL v3, sorgente della versione distribuita e licenze dei componenti usati da Tomorrow Now PDF Editor.');
 import { WEB_SOURCE_ARCHIVE, WEB_SOURCE_BRANCH, WEB_SOURCE_REVISION, WEB_SOURCE_URL } from '@/legal/source';
 
 export default function LicensesPage() {
