@@ -19,11 +19,17 @@ Non cambiare `tomorrownow.tech`, `www`, MX/email o il repository Mac.
 - Il precedente sito Sites rimane disponibile e non è stato ripubblicato.
 - Il token esteso proposto da Workers Builds non è stato creato. Il percorso
   scelto per gli aggiornamenti è GitHub Actions, con credenziale limitata.
-- Creato l'ambiente GitHub `production` del solo repository PDF, con whitelist
-  del solo branch `main` e variabile non segreta `CLOUDFLARE_ACCOUNT_ID`.
-- L'attivazione è completa soltanto quando il segreto è stato autorizzato e
-  salvato e il primo job `deploy` termina con successo. Un job `verify` verde
-  da solo non dimostra che la pubblicazione automatica sia operativa.
+- Aggiornamenti automatici attivi: primo ciclo completo `verify` → `deploy` →
+  verifica HTTPS riuscito il 3 settembre 2026:
+  <https://github.com/Tomorrow-Now-Tech/pdf-editor/actions/runs/33748911800>.
+  Sorgente: `cd92946aa82b6ac10980bcfd8e7a8c6f181b555a`;
+  versione Worker: `3b38ada2-9ba2-43eb-a84a-1c9729a1abdc`.
+- Il token autorizzato è salvato esclusivamente come segreto dell'ambiente
+  GitHub `production` del repository PDF. L'ambiente ammette soltanto il branch
+  `main`, non consente il bypass amministrativo e conserva l'account ID come
+  variabile non segreta. Nessuna credenziale è nel sorgente o nell'app Mac.
+- Verificato il funzionamento con il solo permesso Cloudflare
+  `Account → Script Workers → Modifica`, senza DNS o Routes.
 
 La versione effettivamente pubblicata è sempre quella esposta da
 `https://pdf.tomorrownow.tech/source-version.json`, non necessariamente l'ultimo
@@ -83,6 +89,10 @@ Il controllo HTTP successivo verifica sul dominio pubblico HTTPS, sorgente
 esatto, pagine legali, MIME e contenuto di font e decoder PDF, senza upload di PDF.
 Una verifica remota fallita segnala il problema ma non effettua un rollback
 automatico: valutare la versione precedente prima di ripristinarla.
+Per un controllo indipendente, confrontare il sito con l'artefatto della stessa
+esecuzione GitHub, non con una build ricreata su un sistema operativo diverso:
+gli avvisi delle dipendenze opzionali installate differiscono fra macOS e Linux.
+Il controllo remoto del workflow viene eseguito sullo stesso sistema della build.
 
 ### Credenziale minima
 
@@ -96,7 +106,7 @@ automatico: valutare la versione precedente prima di ripristinarla.
 - Salvare il valore esclusivamente come `CLOUDFLARE_API_TOKEN` tra gli
   **Environment secrets** di `production` in `Tomorrow-Now-Tech/pdf-editor`.
   Non usare un segreto di organizzazione, non inserirlo in file, log o chat.
-- La proposta corrente ha scadenza 4 settembre 2027. Prima della scadenza,
+- Il token attivo scade il 4 settembre 2027. Prima della scadenza,
   sostituire il segreto e verificarne il deploy, poi revocare il vecchio token.
 - Non impostare filtri IP statici sui runner GitHub standard senza un egress
   stabile: i loro indirizzi cambiano e il deploy smetterebbe di funzionare.
