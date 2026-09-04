@@ -8,7 +8,7 @@ export const metadata = pageMetadata('/privacy', 'Privacy | Tomorrow Now PDF Edi
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Informativa privacy" intro="Informazioni preliminari sulla versione browser, sull’app Mac e sui contatti di assistenza.">
+    <LegalPage path="/privacy" title="Informativa privacy" intro="Informazioni preliminari sulla versione browser, sull’app Mac e sui contatti di assistenza.">
       <h2>1. Titolare del trattamento</h2>
       <CompanyDetails className="my-5" />
       <p>I dati sopra riportati sono quelli comunicati dal gestore. Partita IVA e PEC sono indicate come “in fase di emissione” e saranno aggiornate quando disponibili; l’anagrafica completa e l’informativa restano da verificare. Il marchio del servizio è Tomorrow Now.</p>

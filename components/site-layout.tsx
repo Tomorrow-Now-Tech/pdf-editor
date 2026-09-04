@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { GOOGLE_SITE_VERIFICATION } from '@/seo/site.mjs';
-import './globals.css';
+import '@/app/globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://pdf.tomorrownow.tech'),
@@ -26,9 +26,9 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export function SiteLayout({ children, locale }: Readonly<{ children: React.ReactNode; locale: 'it' | 'en' }>) {
   return (
-    <html lang="it">
+    <html lang={locale === 'en' ? 'en' : 'it'}>
       <body>{children}</body>
     </html>
   );

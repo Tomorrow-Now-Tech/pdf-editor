@@ -1,3 +1,7 @@
+import { TRANSLATORS } from '@/i18n/messages.mjs';
+import { localizedPath, type Locale } from '@/i18n/routes.mjs';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { EN_TOOL_PAGES } from '@/seo/tools-en.mjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Download, ShieldCheck } from 'lucide-react';
@@ -12,7 +16,11 @@ import {
 import { TOOL_PAGES, type ToolPage } from '@/seo/tools.mjs';
 import { SITE_NAME, canonicalUrl, safeJsonLd } from '@/seo/site.mjs';
 
-export function SeoToolPage({ tool }: { tool: ToolPage }) {
+export function SeoToolPage({ tool, locale = 'it' }: { tool: ToolPage; locale?: Locale }) {
+  const t = TRANSLATORS[locale];
+  const path = (value: string) => localizedPath(value, locale);
+  const toolPath = locale === 'en' ? `/en/${tool.slug}` : `/${tool.slug}`;
+  const tools = locale === 'en' ? EN_TOOL_PAGES : TOOL_PAGES;
   const breadcrumbs = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -21,13 +29,13 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
         '@type': 'ListItem',
         position: 1,
         name: SITE_NAME,
-        item: canonicalUrl('/'),
+        item: canonicalUrl(path('/')),
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: tool.label,
-        item: canonicalUrl(`/${tool.slug}`),
+        item: canonicalUrl(toolPath),
       },
     ],
   };
@@ -40,7 +48,7 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
       <header className="border-b border-white/10 bg-[#080b14] px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 py-3">
           <Link
-            href="/"
+            href={path("/")}
             className="flex items-center gap-3 text-sm font-bold text-white sm:text-base"
           >
             <Image
@@ -55,24 +63,22 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
               <span className="brand-gradient-text">PDF Editor</span>
             </span>
           </Link>
+          <div className="flex flex-wrap items-center gap-2"><LanguageSwitcher path={toolPath} locale={locale} />
           <a
             href={MAC_DMG_DOWNLOAD_URL}
             download={MAC_DMG_FILENAME}
-            title={MAC_DMG_DESCRIPTION}
+            title={t(MAC_DMG_DESCRIPTION)}
             className="brand-button inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
           >
-            <Download className="size-4" /> Scarica per Mac
-          </a>
+            <Download className="size-4" /> {t("Scarica per Mac")} </a></div>
         </div>
       </header>
       <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6 lg:px-8">
         <nav
-          aria-label="Percorso di navigazione"
+          aria-label={t("Percorso di navigazione")}
           className="mb-5 flex flex-wrap gap-2 text-sm text-slate-400"
         >
-          <Link href="/" className="hover:text-cyan-200">
-            Editor PDF
-          </Link>
+          <Link href={path("/")} className="hover:text-cyan-200"> {t("Editor PDF")} </Link>
           <span aria-hidden="true">/</span>
           <span aria-current="page" className="text-slate-200">
             {tool.label}
@@ -80,9 +86,7 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
         </nav>
         <div className="mb-6 max-w-4xl">
           <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-cyan-200">
-            <ShieldCheck className="size-4" /> Gratis · Senza account · PDF
-            elaborato sul dispositivo
-          </p>
+            <ShieldCheck className="size-4" /> {t("Gratis · Senza account · PDF elaborato sul dispositivo")} </p>
           <h1 className="text-balance text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
             {tool.heading}
           </h1>
@@ -90,10 +94,9 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
             {tool.intro}
           </p>
         </div>
-        <PdfEditor initialTool={tool.mode} uploadHint={tool.uploadHint} />
+        <PdfEditor locale={locale} initialTool={tool.mode} uploadHint={tool.uploadHint} />
         <section className="py-12" aria-labelledby="come-funziona">
-          <h2 id="come-funziona" className="text-2xl font-bold text-white">
-            Come usare {tool.label.toLowerCase()}
+          <h2 id="come-funziona" className="text-2xl font-bold text-white"> {locale === 'en' ? 'How it works' : `Come usare ${tool.label.toLowerCase()}`}
           </h2>
           <ol className="mt-6 grid gap-4 lg:grid-cols-3">
             {tool.steps.map((step, index) => (
@@ -128,20 +131,14 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
           </div>
           <aside
             className="self-start rounded-2xl border border-amber-300/25 bg-amber-300/[.06] p-5"
-            aria-label="Limiti da conoscere"
+            aria-label={t("Limiti da conoscere")}
           >
-            <h2 className="text-lg font-bold text-amber-100">
-              Prima di condividere il risultato
-            </h2>
+            <h2 className="text-lg font-bold text-amber-100"> {t("Prima di condividere il risultato")} </h2>
             <p className="mt-3 text-base leading-7 text-amber-100/85">
               {tool.warning}
             </p>
-            <p className="mt-4 text-sm leading-6 text-slate-300">
-              Il PDF resta sul dispositivo. Il fornitore del sito può trattare i
-              normali dati tecnici di accesso:{' '}
-              <Link href="/privacy" className="underline underline-offset-4">
-                leggi la privacy
-              </Link>
+            <p className="mt-4 text-sm leading-6 text-slate-300"> {t("Il PDF resta sul dispositivo. Il fornitore del sito può trattare i normali dati tecnici di accesso:")}{' '}
+              <Link href={path("/privacy")} className="underline underline-offset-4"> {t("leggi la privacy")} </Link>
               .
             </p>
           </aside>
@@ -150,9 +147,7 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
           className="max-w-4xl py-12"
           aria-labelledby="domande-frequenti"
         >
-          <h2 id="domande-frequenti" className="text-2xl font-bold text-white">
-            Domande frequenti
-          </h2>
+          <h2 id="domande-frequenti" className="text-2xl font-bold text-white"> {t("Domande frequenti")} </h2>
           <dl className="mt-6 space-y-6">
             {tool.faqs.map((faq) => (
               <div key={faq.question}>
@@ -167,14 +162,14 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
           </dl>
         </section>
         <nav
-          aria-label="Altri strumenti PDF"
+          aria-label={t("Altri strumenti PDF")}
           className="flex flex-wrap gap-3 pb-10"
         >
-          {TOOL_PAGES.filter((other) => other.slug !== tool.slug).map(
+          {tools.filter((other) => other.slug !== tool.slug).map(
             (other) => (
               <Link
                 key={other.slug}
-                href={`/${other.slug}`}
+                href={locale === 'en' ? `/en/${other.slug}` : `/${other.slug}`}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-cyan-300/50 hover:text-white"
               >
                 {other.label}
@@ -193,33 +188,25 @@ export function SeoToolPage({ tool }: { tool: ToolPage }) {
             <p className="text-sm font-bold text-cyan-200">
               A Tomorrow Now product
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-white">
-              Software che semplifica il lavoro di domani.
-            </h2>
-            <p className="mt-2 text-base text-slate-300">
-              Scopri gli altri prodotti e le soluzioni digitali Tomorrow Now.
-            </p>
+            <h2 className="mt-2 text-2xl font-bold text-white"> {t("Software che semplifica il lavoro di domani.")} </h2>
+            <p className="mt-2 text-base text-slate-300"> {t("Scopri gli altri prodotti e le soluzioni digitali Tomorrow Now.")} </p>
           </div>
-          <span className="inline-flex items-center gap-2 text-base font-bold text-white">
-            Visita Tomorrow Now <ArrowRight className="size-5" />
+          <span className="inline-flex items-center gap-2 text-base font-bold text-white"> {t("Visita Tomorrow Now")} <ArrowRight className="size-5" />
           </span>
         </a>
         <footer className="mt-10 border-t border-white/10 py-8 text-sm text-slate-400">
           <nav
-            aria-label="Informazioni sul servizio"
+            aria-label={t("Informazioni sul servizio")}
             className="mb-6 flex flex-wrap gap-5"
           >
-            <Link href="/">Editor PDF</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Termini</Link>
-            <Link href="/licenses">Licenze</Link>
-            <a href={WEB_SOURCE_URL}>Codice sorgente</a>
+            <Link href={path("/")}>{t("Editor PDF")}</Link>
+            <Link href={path("/privacy")}>Privacy</Link>
+            <Link href={path("/terms")}>{t("Termini")}</Link>
+            <Link href={path("/licenses")}>{t("Licenze")}</Link>
+            <a href={WEB_SOURCE_URL}>{t("Codice sorgente")}</a>
           </nav>
-          <CompanyDetails />
-          <p className="mt-3 text-amber-100/70">
-            Versione beta · Dati societari e informazioni legali in
-            aggiornamento.
-          </p>
+          <CompanyDetails locale={locale} />
+          <p className="mt-3 text-amber-100/70"> {t("Versione beta · Dati societari e informazioni legali in aggiornamento.")} </p>
         </footer>
       </div>
     </main>

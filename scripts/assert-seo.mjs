@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { TOOL_PAGES } from '../seo/tools.mjs';
+import { EN_TOOL_PAGES } from '../seo/tools-en.mjs';
+import { PUBLIC_PATHS, ROUTE_PAIRS } from '../i18n/routes.mjs';
 import {
   SITE_ORIGIN,
   GOOGLE_SITE_VERIFICATION,
@@ -9,13 +11,7 @@ import {
 // Read the server-rendered HTML: crawlers must not need to open a PDF or run
 // the editor to discover titles, navigation, content and ownership metadata.
 export async function assertSeo(get) {
-  const paths = [
-    '/',
-    ...TOOL_PAGES.map((tool) => `/${tool.slug}`),
-    '/privacy',
-    '/terms',
-    '/licenses',
-  ];
+  const paths = PUBLIC_PATHS;
   const sitemap = await get('/sitemap.xml');
   assert.equal(sitemap.status, 200, 'sitemap');
   assert.match(sitemap.headers.get('content-type') || '', /application\/xml/);
@@ -51,6 +47,9 @@ export async function assertSeo(get) {
     );
     const html = await response.text();
     const head = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1] || '';
+    const locale = path === '/en' || path.startsWith('/en/') ? 'en' : 'it';
+    assert.match(html, new RegExp(`<html[^>]*lang="${locale}"`), `Document language: ${path}`);
+    assert.equal((html.match(/<h1\b/g) || []).length, 1, `One H1: ${path}`);
     const links = [...head.matchAll(/<link\b[^>]*>/gi)].map(
       (match) => match[0],
     );
@@ -58,6 +57,14 @@ export async function assertSeo(get) {
     assert.equal(canonicals.length, 1, `One canonical required: ${path}`);
     const canonical = canonicals[0].match(/href="([^"]+)"/)?.[1];
     assert.equal(new URL(canonical).href, canonicalUrl(path), path);
+    const pair = ROUTE_PAIRS.find(route => route[locale] === path);
+    for (const [language, destination] of Object.entries({ ...pair, 'x-default': pair.it })) {
+      const alternate = links.find(link => new RegExp(`hreflang="${language}"`, 'i').test(link));
+      assert.ok(alternate, `Missing alternate ${language}: ${path}`);
+      assert.equal(new URL(alternate.match(/href="([^"]+)"/)?.[1]).href, canonicalUrl(destination));
+      assert.ok(xml.includes(`hreflang="${language}" href="${canonicalUrl(destination)}"`));
+    }
+    assert.ok(html.includes(`href="${pair.it}"`) && html.includes(`href="${pair.en}"`), `Language switch: ${path}`);
     const title = head.match(/<title>([^<]+)<\/title>/)?.[1];
     assert.ok(
       title && !titles.has(title),
@@ -69,15 +76,19 @@ export async function assertSeo(get) {
       !/<meta\b[^>]*name="robots"[^>]*content="[^"]*noindex/i.test(head),
       path,
     );
-    if (path === '/') {
+    if (path === '/' || path === '/en') {
       assert.ok(
         head.includes(`content="${GOOGLE_SITE_VERIFICATION}"`),
         'Google verification must be in the initial head',
       );
-      for (const tool of TOOL_PAGES)
-        assert.ok(html.includes(`href="/${tool.slug}"`), tool.slug);
+      for (const tool of locale === "en" ? EN_TOOL_PAGES : TOOL_PAGES)
+        assert.ok(html.includes(`href="${locale === "en" ? "/en" : ""}/${tool.slug}"`), tool.slug);
     }
-    const tool = TOOL_PAGES.find((candidate) => path === `/${candidate.slug}`);
+    const tool = (locale === "en" ? EN_TOOL_PAGES : TOOL_PAGES).find(candidate => path === `${locale === "en" ? "/en" : ""}/${candidate.slug}`);
+    if (locale === 'en') {
+      const visible = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]*>/g, ' ');
+      assert.doesNotMatch(visible, /\b(?:Scarica|Trascina|Nessun|Pagine|Carattere|Informazioni legali|Partita IVA|in fase di emissione)\b/, `Untranslated English page: ${path}`);
+    }
     if (tool) {
       assert.equal((html.match(/<h1\b/g) || []).length, 1, path);
       assert.ok(
@@ -103,6 +114,7 @@ export async function assertSeo(get) {
       );
     }
   }
+  for (const unknown of ['/en/not-a-real-tool', '/fr', '/en/comprimi-pdf']) assert.equal((await get(unknown)).status, 404, unknown);
   console.log(
     `SEO verified: ${paths.length} canonical pages, sitemap, robots, public verification tag and crawlable tool content.`,
   );

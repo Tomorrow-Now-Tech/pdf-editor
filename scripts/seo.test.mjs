@@ -18,7 +18,7 @@ test('SEO tools have unique canonical URLs, metadata and useful tool-specific co
     );
   }
   const home = await readFile(
-    new URL('../app/page.tsx', import.meta.url),
+    new URL('../components/home-page.tsx', import.meta.url),
     'utf8',
   );
   for (const tool of TOOL_PAGES) {
@@ -26,11 +26,11 @@ test('SEO tools have unique canonical URLs, metadata and useful tool-specific co
     assert.ok(tool.steps.length >= 3 && tool.faqs.length >= 3);
     assert.ok(tool.warning.length > 100 && tool.detail.length >= 2);
     assert.ok(
-      home.includes(`href="/${tool.slug}"`),
+      home.includes(`path("/${tool.slug}")`),
       'Tools must be discoverable from the home page',
     );
     const source = await readFile(
-      new URL(`../app/${tool.slug}/page.tsx`, import.meta.url),
+      new URL(`../app/(it)/${tool.slug}/page.tsx`, import.meta.url),
       'utf8',
     );
     assert.ok(

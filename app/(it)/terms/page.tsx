@@ -6,7 +6,7 @@ import { CompanyDetails } from '@/components/company-details';
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Termini d’uso" intro="Condizioni preliminari per l’utilizzo gratuito dell’editor PDF.">
+    <LegalPage path="/terms" title="Termini d’uso" intro="Condizioni preliminari per l’utilizzo gratuito dell’editor PDF.">
       <h2>1. Servizio</h2>
       <p>Tomorrow Now PDF Editor è uno strumento gratuito per svolgere operazioni su documenti PDF nel browser o tramite l’app Mac. Le funzioni possono cambiare nel tempo e la versione web è indicata come beta.</p>
       <p>Dati del gestore:</p>

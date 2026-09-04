@@ -6,7 +6,7 @@ import { WEB_SOURCE_ARCHIVE, WEB_SOURCE_BRANCH, WEB_SOURCE_REVISION, WEB_SOURCE_
 
 export default function LicensesPage() {
   return (
-    <LegalPage title="Open source e licenze" intro="Dove trovare il codice e quali diritti accompagnano il software.">
+    <LegalPage path="/licenses" title="Open source e licenze" intro="Dove trovare il codice e quali diritti accompagnano il software.">
       <h2>Codice sorgente</h2>
       <p><a href={WEB_SOURCE_URL}>Sorgente della versione web in uso</a>{WEB_SOURCE_REVISION ? <> · revisione <code>{WEB_SOURCE_REVISION}</code></> : ' · anteprima locale con modifiche non ancora pubblicate'}.</p>
       {WEB_SOURCE_ARCHIVE && <p><a href={WEB_SOURCE_ARCHIVE}>Scarica il sorgente completo di questa versione (ZIP)</a>, con istruzioni di build e lockfile. <a href={WEB_SOURCE_BRANCH}>Segui lo sviluppo della versione web</a>.</p>}

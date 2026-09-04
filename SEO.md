@@ -1,5 +1,16 @@
 # SEO e Google Search Console
 
+## Versione inglese (4 settembre 2026)
+
+La homepage inglese è `/en`, con strumenti a `/en/compress-pdf`, `/en/split-pdf`,
+`/en/pdf-to-word` e `/en/edit-pdf`, più privacy, termini e licenze tradotti.
+Le pagine italiane conservano tutti gli URL precedenti. La sitemap ha sedici URL
+canoniche; le varianti sono collegate con hreflang reciproci e selettore lingua.
+La proprietà Search Console a prefisso URL già verificata comprende anche `/en`:
+non occorre una nuova verifica. Pubblicazione e sitemap non garantiscono che le
+nuove pagine siano già indicizzate. Vedi `INTERNATIONALIZATION.md` per manutenzione
+dei testi, funzionalità condivise e test.
+
 Il solo sito PDF usa l'origine canonica `https://pdf.tomorrownow.tech`.
 Non modificare la proprietà, i DNS o la configurazione del sito aziendale.
 
@@ -24,7 +35,7 @@ di posizionamento inventata. L'immagine social già esistente è preservata.
 La proprietà da usare in Search Console è il prefisso URL
 `https://pdf.tomorrownow.tech/`, separato dal sito principale.
 Il tag di verifica HTML fornito da Google è in `seo/site.mjs` e viene esposto
-nel `<head>` da `app/layout.tsx`. È un identificatore pubblico di proprietà,
+nel `<head>` da `components/site-layout.tsx`. È un identificatore pubblico di proprietà,
 non un token API: non rimuoverlo dopo la verifica senza concordare una migrazione
 del proprietario. Non sono necessari Google Analytics, Tag Manager o cookie.
 
@@ -37,7 +48,7 @@ Dopo il deploy verificato:
    eventuali quote e non ripetere invii per accelerare la scansione.
 
 `robots.txt` permette la scansione e indica la sitemap. La sitemap contiene
-solo le otto pagine canoniche HTTPS, senza parametri, alias `www`, date fittizie
+le sedici pagine canoniche HTTPS in italiano e inglese, senza parametri, alias `www`, date fittizie
 o percorsi di download degli utenti (che non esistono sul server).
 I redirect Cloudflare preservano percorso e query, secondo
 `CLOUDFLARE_DEPLOYMENT.md`.
