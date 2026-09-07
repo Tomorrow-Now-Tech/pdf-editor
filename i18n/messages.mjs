@@ -116,6 +116,8 @@ export const EN = {
   'Parti online. Continua con gli strumenti avanzati su Mac.': 'Quick tasks in your browser. More tools on your Mac.',
   'La versione browser offre aggiunta e modifica visiva del testo, compressione, divisione, estrazione del testo in Word e gestione pagine senza upload. La modifica visiva non rimuove il testo originale: non usarla per oscurare dati riservati. L’app Mac aggiunge riconoscimento avanzato dei font incorporati, OCR locale, firme, immagini e moduli.': 'Use the browser to add text, apply text overlays, compress files, split pages and extract text to Word without uploading your PDF. Text overlays do not remove the original text and must not be used to hide confidential information. The Mac app adds embedded-font recognition, local OCR, signatures, images and forms.',
   'Scarica l’app Mac': 'Download the Mac app',
+  'Scopri l’app Mac': 'Explore the Mac app',
+  'App per Mac': 'Mac app',
   'L’interfaccia dell’attuale versione Mac è in italiano. Richiede un Mac con chip Apple Silicon (M1 o successivo).': 'The current Mac app has an Italian-language interface and requires Apple Silicon (M1 or later).',
   'Vedi il sorgente': 'View source code',
   'Software libero, marchio riconoscibile': 'Open-source software. A Tomorrow Now product.',

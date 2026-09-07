@@ -203,6 +203,7 @@ export function SeoToolPage({ tool, locale = 'it' }: { tool: ToolPage; locale?: 
             <Link href={path("/privacy")}>Privacy</Link>
             <Link href={path("/terms")}>{t("Termini")}</Link>
             <Link href={path("/licenses")}>{t("Licenze")}</Link>
+            <Link href={path("/editor-pdf-mac")}>{t("App per Mac")}</Link>
             <a href={WEB_SOURCE_URL}>{t("Codice sorgente")}</a>
           </nav>
           <CompanyDetails locale={locale} />

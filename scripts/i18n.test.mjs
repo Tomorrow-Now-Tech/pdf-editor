@@ -13,8 +13,8 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { pdfDocumentOptions } from '../pdf/runtime.mjs';
 
 test('language variants have distinct URLs, reciprocal alternates and self-canonicals', () => {
-  assert.equal(PUBLIC_PATHS.length, 16);
-  assert.equal(new Set(PUBLIC_PATHS).size, 16);
+  assert.equal(PUBLIC_PATHS.length, 18);
+  assert.equal(new Set(PUBLIC_PATHS).size, 18);
   for (const pair of ROUTE_PAIRS) {
     for (const locale of ['it', 'en']) {
       assert.equal(localizedPath(pair.it, locale), pair[locale]);
@@ -28,6 +28,21 @@ test('language variants have distinct URLs, reciprocal alternates and self-canon
   }
   assert.throws(() => localizedPath('/fr', 'en'));
   assert.throws(() => localizedPath('//example.org', 'en'));
+});
+
+test('Mac landing has equivalent static routes and honest language notes', async () => {
+  assert.equal(localizedPath('/editor-pdf-mac', 'en'), '/en/pdf-editor-for-mac');
+  assert.equal(localizedPath('/en/pdf-editor-for-mac', 'it'), '/editor-pdf-mac');
+  const component = await readFile(new URL('../components/mac-app-page.tsx', import.meta.url), 'utf8');
+  for (const text of [
+    'Interfaccia attualmente in italiano',
+    'The interface is currently in Italian',
+    'Developer ID signed and notarised by Apple',
+    'Your PDF is not uploaded',
+    'non è disponibile una versione Intel',
+  ]) assert.ok(component.includes(text), text);
+  for (const route of ['../app/(it)/editor-pdf-mac/page.tsx', '../app/en/pdf-editor-for-mac/page.tsx'])
+    assert.ok((await readFile(new URL(route, import.meta.url), 'utf8')).includes('<MacAppPage'));
 });
 
 test('English tools preserve functionality and have complete editorial content', async () => {

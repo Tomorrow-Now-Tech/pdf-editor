@@ -113,6 +113,7 @@ export function HomePage({ locale = 'it' }: { locale?: Locale }) {
               <p className="mt-4 text-sm leading-7 text-slate-400">{t("La versione browser offre aggiunta e modifica visiva del testo, compressione, divisione, estrazione del testo in Word e gestione pagine senza upload. La modifica visiva non rimuove il testo originale: non usarla per oscurare dati riservati. L’app Mac aggiunge riconoscimento avanzato dei font incorporati, OCR locale, firme, immagini e moduli.")}</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href={MAC_DMG_DOWNLOAD_URL} download={MAC_DMG_FILENAME} title={t(MAC_DMG_DESCRIPTION)} className="brand-button inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-bold text-white"><Download className="size-4" /> {t("Scarica l’app Mac")}</a>
+                <Link href={path("/editor-pdf-mac")} className="inline-flex h-11 items-center gap-2 rounded-xl border border-cyan-300/25 bg-cyan-300/[.06] px-5 text-sm font-semibold text-cyan-100 hover:bg-cyan-300/[.1]"><ArrowRight className="size-4" /> {t("Scopri l’app Mac")}</Link>
                 <a href={SOURCE_URL} className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[.035] px-5 text-sm font-semibold text-slate-200 hover:bg-white/[.07]"><GitFork className="size-4" /> {t("Vedi il sorgente")}</a>
               </div>
               {locale === 'en' && <p className="mt-3 text-sm leading-6 text-slate-400">{t('L’interfaccia dell’attuale versione Mac è in italiano. Richiede un Mac con chip Apple Silicon (M1 o successivo).')}</p>}
@@ -151,6 +152,7 @@ export function HomePage({ locale = 'it' }: { locale?: Locale }) {
             <Link href={path("/privacy")} className="hover:text-white">Privacy</Link>
             <Link href={path("/terms")} className="hover:text-white">{t("Termini")}</Link>
             <Link href={path("/licenses")} className="hover:text-white">{t("Licenze")}</Link>
+            <Link href={path("/editor-pdf-mac")} className="hover:text-white">{t("App per Mac")}</Link>
             <a href={SOURCE_URL} className="hover:text-white">{t("Codice sorgente")}</a>
             <a href="https://www.tomorrownow.tech" className="hover:text-white">Tomorrow Now</a>
           </div>

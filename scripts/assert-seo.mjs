@@ -113,6 +113,13 @@ export async function assertSeo(get) {
         `Breadcrumb mismatch: ${path}`,
       );
     }
+    if (path === '/editor-pdf-mac' || path === '/en/pdf-editor-for-mac') {
+      assert.ok(html.includes('1.5.1'), `Mac version missing: ${path}`);
+      assert.ok(html.includes('Mac-PDF-Editor-1.5.1-arm64.dmg'), `Direct Mac download missing: ${path}`);
+      assert.ok(html.includes('84262464066aecf0c36ec951ed63909ccbc3fad9d33d5764ea15c5c41568da10'), `Mac checksum missing: ${path}`);
+      assert.ok(html.includes('Apple Silicon'), `Mac compatibility missing: ${path}`);
+      assert.ok(html.includes('100 MB') && (html.includes('1.000') || html.includes('1,000')), `Mac limits missing: ${path}`);
+    }
   }
   for (const unknown of ['/en/not-a-real-tool', '/fr', '/en/comprimi-pdf']) assert.equal((await get(unknown)).status, 404, unknown);
   console.log(

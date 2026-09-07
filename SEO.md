@@ -3,8 +3,8 @@
 ## Versione inglese (4 settembre 2026)
 
 La homepage inglese è `/en`, con strumenti a `/en/compress-pdf`, `/en/split-pdf`,
-`/en/pdf-to-word` e `/en/edit-pdf`, più privacy, termini e licenze tradotti.
-Le pagine italiane conservano tutti gli URL precedenti. La sitemap ha sedici URL
+`/en/pdf-to-word` e `/en/edit-pdf`, più pagina Mac, privacy, termini e licenze tradotti.
+Le pagine italiane conservano tutti gli URL precedenti. La sitemap ha diciotto URL
 canoniche; le varianti sono collegate con hreflang reciproci e selettore lingua.
 La proprietà Search Console a prefisso URL già verificata comprende anche `/en`:
 non occorre una nuova verifica. Pubblicazione e sitemap non garantiscono che le
@@ -21,7 +21,12 @@ Non modificare la proprietà, i DNS o la configurazione del sito aziendale.
 - `/dividi-pdf`: estrazione di intervalli e pagine separate in ZIP.
 - `/pdf-in-word`: estrazione del testo in DOCX, senza OCR né layout fedele.
 - `/modifica-pdf`: aggiunta e modifica visiva del testo, non redazione sicura.
+- `/editor-pdf-mac`: pagina della release Mac verificata, con funzioni, compatibilità,
+  limiti, firma/notarizzazione, download DMG diretto, checksum e sorgente corrispondente.
 - `/privacy`, `/terms`, `/licenses`: informazioni sul servizio con canonical propri.
+
+La pagina equivalente inglese è `/en/pdf-editor-for-mac`. Descrive con chiarezza
+che il DMG attuale ha l'interfaccia italiana e funziona soltanto su Apple Silicon.
 
 Ogni pagina strumento rende titolo, descrizione, istruzioni, limiti e FAQ
 nell'HTML iniziale e apre l'editor con il pannello relativo già selezionato.
@@ -43,12 +48,13 @@ Dopo il deploy verificato:
 
 1. Completare la verifica con il metodo Tag HTML in Search Console.
 2. Inviare `https://pdf.tomorrownow.tech/sitemap.xml` nel report Sitemap.
-3. Usare Controllo URL sulla homepage e sulle quattro pagine degli strumenti.
+3. Usare Controllo URL sulla homepage, sulle quattro pagine degli strumenti e
+   sulla pagina Mac quando viene pubblicata.
 4. Richiedere l'indicizzazione una volta per URL se disponibile; rispettare
    eventuali quote e non ripetere invii per accelerare la scansione.
 
 `robots.txt` permette la scansione e indica la sitemap. La sitemap contiene
-le sedici pagine canoniche HTTPS in italiano e inglese, senza parametri, alias `www`, date fittizie
+le diciotto pagine canoniche HTTPS in italiano e inglese, senza parametri, alias `www`, date fittizie
 o percorsi di download degli utenti (che non esistono sul server).
 I redirect Cloudflare preservano percorso e query, secondo
 `CLOUDFLARE_DEPLOYMENT.md`.

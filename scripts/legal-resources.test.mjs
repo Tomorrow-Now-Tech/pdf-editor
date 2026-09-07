@@ -7,7 +7,13 @@ import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readSourceRevision, sourceProvenancePlugin } from './source-provenance.mjs';
 import { COMPANY, PENDING_COMPANY_DETAIL } from '../legal/company.mjs';
-import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME } from '../downloads/mac.mjs';
+import {
+  MAC_APP_SOURCE_URL,
+  MAC_APP_VERSION,
+  MAC_DMG_DOWNLOAD_URL,
+  MAC_DMG_FILENAME,
+  MAC_DMG_SHA256,
+} from '../downloads/mac.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 
@@ -16,13 +22,20 @@ test('Mac download links target the installer and keep source links separate', a
   assert.equal(url.origin, 'https://github.com');
   assert.match(url.pathname, /^\/Trader855\/PDF\/releases\/download\/v[\d.]+\/[^/]+-arm64\.dmg$/);
   assert.equal(url.pathname.split('/').at(-1), MAC_DMG_FILENAME);
-  for (const [path, count] of [['components/home-page.tsx', 2], ['components/pdf-editor.tsx', 1]]) {
+  for (const [path, count, sourceLink] of [
+    ['components/home-page.tsx', 2, 'href={SOURCE_URL}'],
+    ['components/pdf-editor.tsx', 1, 'href={SOURCE_URL}'],
+    ['components/mac-app-page.tsx', 3, 'href={MAC_APP_SOURCE_URL}'],
+  ]) {
     const source = await readFile(`${root}/${path}`, 'utf8');
     assert.equal(source.match(/href=\{MAC_DMG_DOWNLOAD_URL\}/g)?.length, count, path);
     assert.equal(source.match(/download=\{MAC_DMG_FILENAME\}/g)?.length, count, path);
-    assert.ok(source.includes('href={SOURCE_URL}'), 'The source link must remain available');
+    assert.ok(source.includes(sourceLink), 'The source link must remain available');
     assert.ok(!source.includes('/releases/latest'), 'Download must not open a release page');
   }
+  assert.equal(MAC_APP_VERSION, '1.5.1');
+  assert.equal(MAC_APP_SOURCE_URL, 'https://github.com/Trader855/PDF/tree/v1.5.1');
+  assert.match(MAC_DMG_SHA256, /^[a-f0-9]{64}$/);
 });
 
 test('operator details preserve the supplied contact and mark unknown identifiers as pending', async () => {

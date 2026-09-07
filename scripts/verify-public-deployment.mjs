@@ -4,7 +4,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { resolve } from 'node:path';
 import { readSourceRevision } from './source-provenance.mjs';
 import { SOURCE_REPOSITORY } from '../legal/source-config.mjs';
-import { MAC_DMG_DOWNLOAD_URL } from '../downloads/mac.mjs';
+import { MAC_APP_SOURCE_URL, MAC_DMG_DOWNLOAD_URL } from '../downloads/mac.mjs';
 import { assertSeo } from './assert-seo.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -41,6 +41,13 @@ for (const path of ['/', '/privacy', '/terms', '/licenses']) {
   assert.ok(html.includes('(in fase di emissione)'), `Company details missing: ${path}`);
   if (path === '/privacy') assert.ok(html.includes('senza passare da Sites'));
   if (path === '/') assert.equal(html.split(`href="${MAC_DMG_DOWNLOAD_URL}"`).length - 1, 2, 'Both Mac download buttons must link directly to the DMG');
+}
+for (const path of ['/editor-pdf-mac', '/en/pdf-editor-for-mac']) {
+  const response = await get(path);
+  assert.equal(response.status, 200, path);
+  const html = await response.text();
+  assert.ok(html.includes(MAC_DMG_DOWNLOAD_URL), `Direct Mac download missing: ${path}`);
+  assert.ok(html.includes(MAC_APP_SOURCE_URL), `Mac release source missing: ${path}`);
 }
 for (const path of ['pdf.worker.min.mjs', 'pdfjs/wasm/openjpeg.wasm', 'pdfjs/wasm/jbig2.wasm',
   'pdfjs/wasm/qcms_bg.wasm', 'pdfjs/wasm/openjpeg_nowasm_fallback.js',
