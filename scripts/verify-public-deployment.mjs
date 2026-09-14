@@ -53,7 +53,7 @@ for (const path of ['pdf.worker.min.mjs', 'pdfjs/wasm/openjpeg.wasm', 'pdfjs/was
   'pdfjs/wasm/qcms_bg.wasm', 'pdfjs/wasm/openjpeg_nowasm_fallback.js',
   'pdfjs/wasm/jbig2_nowasm_fallback.js', 'pdfjs/cmaps/Adobe-Japan1-UCS2.bcmap',
   'pdfjs/standard_fonts/LiberationSans-Regular.ttf', 'pdfjs/iccs/CGATS001Compat-v2-micro.icc',
-  'legal/dependencies.json', 'legal/AGPL-3.0.txt', 'legal/THIRD_PARTY_LICENSES.txt']) {
+  'legal/AGPL-3.0.txt', 'legal/THIRD_PARTY_LICENSES.txt']) {
   const response = await get(`/${path}`);
   assert.equal(response.status, 200, path);
   const mime = response.headers.get('content-type') || '';
@@ -61,6 +61,17 @@ for (const path of ['pdf.worker.min.mjs', 'pdfjs/wasm/openjpeg.wasm', 'pdfjs/was
   if (/\.m?js$/.test(path)) assert.match(mime, /javascript/);
   assert.deepEqual(Buffer.from(await response.arrayBuffer()), await readFile(`${root}/public/${path}`), path);
 }
+
+// This inventory is build-generated. Optional platform packages legitimately
+// differ between macOS development and the Linux Cloudflare runner.
+const localDependencies = JSON.parse(await readFile(`${root}/public/legal/dependencies.json`, 'utf8'));
+const dependenciesResponse = await get('/legal/dependencies.json');
+assert.equal(dependenciesResponse.status, 200, 'legal/dependencies.json');
+const publicDependencies = await dependenciesResponse.json();
+assert.equal(publicDependencies.lockfileSha256, localDependencies.lockfileSha256, 'Dependency lockfile mismatch');
+assert.equal(publicDependencies.scope, localDependencies.scope, 'Dependency inventory scope mismatch');
+assert.equal(publicDependencies.nativeAndBundledComponentsRequireReview, true, 'Dependency review flag missing');
+assert.ok(Array.isArray(publicDependencies.packages) && publicDependencies.packages.length > 0, 'Dependency inventory is empty');
 assert.equal((await get('/not-a-real-pdf-editor-page')).status, 404);
 await assertSeo(get);
 console.log(`Public release verified over HTTPS: ${revision}. No PDF uploaded.`);
