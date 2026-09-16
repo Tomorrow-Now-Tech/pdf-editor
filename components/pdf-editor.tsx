@@ -142,6 +142,12 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const loadGenerationRef = useRef(0);
   const thumbnailRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dragState = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+  const focusDraftInput = useCallback((element: HTMLTextAreaElement | null) => {
+    if (!element) return;
+    requestAnimationFrame(() => {
+      if (element.isConnected) element.focus();
+    });
+  }, []);
 
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
   const [documentVersion, setDocumentVersion] = useState(0);
@@ -396,7 +402,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     void loadingTaskRef.current?.destroy();
   }, []);
 
-  const mutatePdf = async (mutation: (pdf: PDFDocument) => Promise<void> | void, preferredPage = currentPage) => {
+  const mutatePdf = useCallback(async (mutation: (pdf: PDFDocument) => Promise<void> | void, preferredPage = currentPage) => {
     if (!bytes || busy) return false;
     setBusy(true);
     setError('');
@@ -411,18 +417,31 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     } finally {
       setBusy(false);
     }
-  };
+  }, [bytes, busy, currentPage, loadBytes, errorMessage, t]);
 
   const placeTextDraft = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (tool !== 'add' || !viewportRef.current) return;
+    if ((tool !== 'add' && tool !== 'edit') || !viewportRef.current) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const screenX = event.clientX - bounds.left;
     const screenY = event.clientY - bounds.top;
-    const [pdfX, pdfY] = viewportRef.current.convertToPdfPoint(screenX, screenY + fontSize);
+    const nearby = textBoxes
+      .map((box) => {
+        const dx = Math.max(box.screenX - screenX, 0, screenX - (box.screenX + box.screenWidth));
+        const dy = Math.max(box.screenY - screenY, 0, screenY - (box.screenY + box.screenHeight));
+        return { box, distance: (dx * dx) + (dy * dy) };
+      })
+      .sort((left, right) => left.distance - right.distance)[0]?.box;
+    const draftFontSize = nearby?.fontSize || fontSize;
+    if (nearby) {
+      setFontFamily(nearby.fontFamily);
+      setFontSize(Math.round(nearby.fontSize * 10) / 10);
+    }
+    const [pdfX, pdfY] = viewportRef.current.convertToPdfPoint(screenX, screenY + draftFontSize);
+    setSelectedTextId(null);
     setDraft({ screenX, screenY, pdfX, pdfY, text: '' });
   };
 
-  const commitText = async () => {
+  const commitText = useCallback(async () => {
     if (!draft?.text.trim()) {
       setError(t("Scrivi il testo da aggiungere."));
       return;
@@ -441,11 +460,29 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       });
     });
     if (!saved) return;
-    setTool('select');
     setStatus(t("Testo aggiunto. Scarica il PDF quando hai terminato."));
-  };
+  }, [draft, mutatePdf, currentPage, fontFamily, fontColor, fontSize, t]);
+
+  useEffect(() => {
+    if (!draft) return;
+    const commitOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)
+        || target.closest('[data-text-draft], [data-text-properties]')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!draft.text.trim()) {
+        setDraft(null);
+        return;
+      }
+      void commitText();
+    };
+    document.addEventListener('pointerdown', commitOnOutsidePointer, true);
+    return () => document.removeEventListener('pointerdown', commitOnOutsidePointer, true);
+  }, [draft, commitText]);
 
   const selectExistingText = (box: ExistingTextBox) => {
+    setDraft(null);
     setSelectedTextId(box.id);
     setEditText(box.text);
     setFontFamily(box.fontFamily);
@@ -688,7 +725,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       <EditorTopBar locale={locale} status={status} busy={busy} />
       <fieldset disabled={busy} className="m-0 min-w-0 border-0 p-0">
       <div className="flex flex-wrap items-center gap-2 border-b border-white/8 bg-[#0b0f1a] px-3 py-2.5">
-        <ToolbarButton active={tool === 'edit'} onClick={() => setActiveTool('edit')} title={t("Copri e riscrivi: l’originale resta recuperabile")}><PencilLine /><span>{t("Modifica visiva")}</span></ToolbarButton>
+        <ToolbarButton active={tool === 'edit'} onClick={() => setActiveTool('edit')} title={t("Copri e riscrivi: l’originale resta recuperabile")}><PencilLine /><span>{t("Modifica PDF")}</span></ToolbarButton>
         <ToolbarButton active={tool === 'add'} onClick={() => setActiveTool('add')} title={t("Aggiungi testo")}><Type /><span>{t("Aggiungi testo")}</span></ToolbarButton>
         <ToolbarButton active={tool === 'compress'} onClick={() => setActiveTool('compress')} title={t("Comprimi PDF")}><FileArchive /><span className="hidden xl:inline">{t("Comprimi")}</span></ToolbarButton>
         <ToolbarButton active={tool === 'split'} onClick={() => setActiveTool('split')} title={t("Dividi PDF")}><Scissors /><span className="hidden xl:inline">{t("Dividi")}</span></ToolbarButton>
@@ -737,7 +774,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
 
         <div ref={canvasFrameRef} className="editor-canvas-scroll relative flex min-h-0 items-start justify-center overflow-auto bg-[#171b24] p-3 sm:p-6">
           <div className="relative shrink-0 shadow-[0_24px_80px_rgba(0,0,0,.48)]">
-            <canvas ref={canvasRef} aria-label={message('preview', { page: currentPage, count: pageCount })} onClick={placeTextDraft} className={tool === 'add' ? 'cursor-text bg-white' : 'bg-white'} />
+            <canvas ref={canvasRef} aria-label={message('preview', { page: currentPage, count: pageCount })} onClick={placeTextDraft} className={tool === 'add' || tool === 'edit' ? 'cursor-text bg-white' : 'bg-white'} />
             {tool === 'edit' && textBoxes.map((box) => (
               <button
                 key={box.id}
@@ -750,12 +787,18 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
               />
             ))}
             {draft && (
-              <div className="absolute z-10 flex min-w-44 items-start rounded-lg border border-cyan-400 bg-white shadow-2xl" style={{ left: draft.screenX, top: draft.screenY }}>
+              <div data-text-draft className="absolute z-10 flex min-w-44 items-start rounded-lg border border-cyan-400 bg-white shadow-2xl" style={{ left: draft.screenX, top: draft.screenY }}>
                 <button type="button" className="grid h-9 w-8 shrink-0 cursor-move place-items-center border-r border-slate-200 text-slate-500" title={t("Trascina per spostare")} onPointerDown={(event) => {
                   event.preventDefault();
                   dragState.current = { startX: event.clientX, startY: event.clientY, initialX: draft.screenX, initialY: draft.screenY };
                 }}><Grip className="size-4" /></button>
-                <textarea rows={1} value={draft.text} onChange={(event) => setDraft({ ...draft, text: event.target.value })} placeholder={t("Scrivi direttamente qui…")} className="min-h-9 min-w-56 resize both bg-transparent px-2 py-1.5 outline-none" style={{ fontFamily, fontSize, color: fontColor }} />
+                <textarea ref={focusDraftInput} rows={1} value={draft.text} onChange={(event) => setDraft({ ...draft, text: event.target.value })} onBlur={(event) => {
+                  const destination = event.relatedTarget;
+                  if (destination instanceof Element
+                    && destination.closest('[data-text-draft], [data-text-properties]')) return;
+                  if (draft.text.trim()) void commitText();
+                  else setDraft(null);
+                }} placeholder={t("Scrivi direttamente qui…")} className="min-h-9 min-w-56 resize both bg-transparent px-2 py-1.5 outline-none" style={{ fontFamily, fontSize, color: fontColor }} />
                 <button type="button" className="grid h-9 w-8 shrink-0 place-items-center text-slate-400 hover:text-slate-900" aria-label={t("Annulla testo")} onClick={() => setDraft(null)}><X className="size-4" /></button>
               </div>
             )}
@@ -766,10 +809,18 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         <aside className="min-h-0 overflow-y-auto border-l border-white/8 bg-[#0b0f1a]/75 p-4">
           <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{t("Proprietà")}</p>
           {tool === 'edit' && (
-            <div className="space-y-4">
-              <InfoBox>{selectedTextBox ? t("Copri e riscrivi il testo con uno dei tre font disponibili. Il testo originale non viene rimosso e il font esatto non è garantito.") : t("Clicca la scritta da coprire e riscrivere. Non usare questo strumento per nascondere informazioni riservate.")}</InfoBox>
-              <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditAcknowledged(event.target.checked)} className="mt-1.5" />{t("Ho capito: il testo coperto resta recuperabile.")}</label>
-              {selectedTextBox && <>
+            <div data-text-properties className="space-y-4">
+              <InfoBox>{draft
+                ? t("Scrivi direttamente nel riquadro: il testo viene applicato quando clicchi fuori.")
+                : selectedTextBox
+                  ? t("Copri e riscrivi il testo con uno dei tre font disponibili. Il testo originale non viene rimosso e il font esatto non è garantito.")
+                  : t("Clicca un testo esistente per modificarlo oppure uno spazio vuoto per scrivere subito.")}</InfoBox>
+              {draft && <>
+                <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
+                <button type="button" disabled={!draft.text.trim()} onClick={() => void commitText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
+              </>}
+              {!draft && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditAcknowledged(event.target.checked)} className="mt-1.5" />{t("Ho capito: il testo coperto resta recuperabile.")}</label>}
+              {!draft && selectedTextBox && <>
                 <label className="block text-xs font-semibold text-slate-400">{t("Nuovo testo visibile")} <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50" />
                 </label>
                 <p className="rounded-lg bg-white/[.035] px-3 py-2 text-[11px] leading-5 text-slate-500">{t("Rilevato:")} {selectedTextBox.fontName} · {selectedTextBox.fontSize.toFixed(1)} pt</p>
@@ -779,8 +830,8 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
             </div>
           )}
           {tool === 'add' && (
-            <div className="space-y-4">
-              <InfoBox>{t("Clicca sul PDF, scrivi direttamente e trascina la maniglia per posizionare il testo.")}</InfoBox>
+            <div data-text-properties className="space-y-4">
+              <InfoBox>{t("Scrivi direttamente nel riquadro: il testo viene applicato quando clicchi fuori.")}</InfoBox>
               <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
               <button type="button" disabled={!draft?.text.trim()} onClick={() => void commitText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
             </div>

@@ -158,6 +158,9 @@ test('visual replacement leaves original extractable, as the UI warns', async ()
   assert.match(ui, /Non è una cancellazione sicura/);
   assert.match(ui, /disabled=\{!visualEditAcknowledged\}/);
   assert.match(ui, /tool === 'edit' \|\| hasVisualEdits/);
+  assert.match(ui, /tool !== 'add' && tool !== 'edit'/);
+  assert.match(ui, /data-text-draft/);
+  assert.match(ui, /document\.addEventListener\('pointerdown', commitOnOutsidePointer, true\)/);
   assert.match(ui, /if \(hasVisualEdits\)/);
   assert.doesNotMatch(ui, /Testo sostituito direttamente nel PDF/);
 });
