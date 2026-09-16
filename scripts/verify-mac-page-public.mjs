@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
-import { MAC_APP_SOURCE_URL, MAC_DMG_DOWNLOAD_URL } from '../downloads/mac.mjs';
+import {
+  MAC_APP_SOURCE_URL,
+  MAC_DMG_DOWNLOAD_URL,
+  MAC_DMG_FILENAME,
+} from '../downloads/mac.mjs';
 
 const origin = 'https://pdf.tomorrownow.tech';
 const get = (path) =>
@@ -47,10 +51,7 @@ for (const page of pages) {
     html.includes(MAC_APP_SOURCE_URL),
     `Release source link missing: ${page.path}`,
   );
-  assert.ok(
-    html.includes('Mac-PDF-Editor-1.6.0-arm64.dmg'),
-    `DMG version missing: ${page.path}`,
-  );
+  assert.ok(html.includes(MAC_DMG_FILENAME), `DMG version missing: ${page.path}`);
 }
 
 for (const [path, destination] of [
@@ -71,9 +72,12 @@ const download = await fetch(MAC_DMG_DOWNLOAD_URL, {
   signal: AbortSignal.timeout(30_000),
 });
 assert.equal(download.status, 200, 'DMG download');
-assert.match(
-  download.headers.get('content-disposition') || '',
-  /attachment;\s*filename=Mac-PDF-Editor-1\.5\.1-arm64\.dmg/i,
+const contentDisposition = download.headers.get('content-disposition') || '';
+assert.ok(
+  contentDisposition.toLowerCase().startsWith('attachment;') &&
+    (contentDisposition.includes(`filename=${MAC_DMG_FILENAME}`) ||
+      contentDisposition.includes(`filename="${MAC_DMG_FILENAME}"`)),
+  `Unexpected DMG filename: ${contentDisposition}`,
 );
 assert.equal(download.headers.get('content-type'), 'application/octet-stream');
 assert.ok(
