@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { Document as WordDocument, Packer, PageBreak, Paragraph, TextRun } from 'docx';
 import JSZip from 'jszip';
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { getDocument, Util } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { uprightTextRotation } from '../pdf/page-rotation.mjs';
 import { pdfDocumentOptions } from '../pdf/runtime.mjs';
 
 const options = (data) => ({ ...pdfDocumentOptions(data, `${import.meta.dirname}/../public/pdfjs/`), useWorkerFetch: false });
@@ -18,14 +19,15 @@ const sourceBytes = await source.save();
 const edited = await PDFDocument.load(sourceBytes);
 const page = edited.getPage(0);
 const font = await edited.embedFont(StandardFonts.Helvetica);
+page.setRotation(degrees(90));
 page.drawText('WEB EDIT TEST 0123456789', {
   x: 72,
-  y: 720,
+  y: 400,
   size: 16,
   font,
   color: rgb(0.05, 0.12, 0.22),
+  rotate: degrees(uprightTextRotation(page.getRotation().angle)),
 });
-page.setRotation(degrees(90));
 const [duplicate] = await edited.copyPages(edited, [0]);
 edited.addPage(duplicate);
 
@@ -38,7 +40,38 @@ const textContent = await firstPage.getTextContent();
 const extracted = textContent.items.map((item) => 'str' in item ? item.str : '').join(' ');
 assert.match(extracted, /WEB EDIT TEST 0123456789/, 'Il testo aggiunto deve essere presente nel PDF salvato');
 assert.equal(firstPage.rotate, 90, 'La rotazione deve essere conservata');
+const insertedItem = textContent.items.find((item) => 'str' in item && item.str.includes('WEB EDIT TEST'));
+assert.ok(insertedItem && 'transform' in insertedItem, 'Il testo aggiunto deve avere una trasformazione verificabile');
+const visualTransform = Util.transform(firstPage.getViewport({ scale: 1 }).transform, insertedItem.transform);
+const visualAngle = ((Math.round(Math.atan2(visualTransform[1], visualTransform[0]) * 180 / Math.PI) % 360) + 360) % 360;
+assert.equal(visualAngle, 0, 'Il testo aggiunto deve apparire diritto su una pagina ruotata');
 await loadingTask.destroy();
+
+const rotationPdf = await PDFDocument.create();
+const rotationFont = await rotationPdf.embedFont(StandardFonts.Helvetica);
+for (const rotation of [0, 90, 180, 270]) {
+  const rotatedPage = rotationPdf.addPage([300, 300]);
+  rotatedPage.setRotation(degrees(rotation));
+  rotatedPage.drawText(`ROTATION ${rotation}`, {
+    x: 150,
+    y: 150,
+    size: 12,
+    font: rotationFont,
+    rotate: degrees(uprightTextRotation(rotatedPage.getRotation().angle)),
+  });
+}
+const rotationTask = getDocument(options(await rotationPdf.save()));
+const rotationDocument = await rotationTask.promise;
+for (let pageNumber = 1; pageNumber <= rotationDocument.numPages; pageNumber += 1) {
+  const rotatedPage = await rotationDocument.getPage(pageNumber);
+  const content = await rotatedPage.getTextContent();
+  const item = content.items.find((candidate) => 'str' in candidate && candidate.str.startsWith('ROTATION'));
+  assert.ok(item && 'transform' in item, `Testo di rotazione mancante a pagina ${pageNumber}`);
+  const transform = Util.transform(rotatedPage.getViewport({ scale: 1 }).transform, item.transform);
+  const angle = ((Math.round(Math.atan2(transform[1], transform[0]) * 180 / Math.PI) % 360) + 360) % 360;
+  assert.equal(angle, 0, `Il testo deve restare diritto con /Rotate=${rotatedPage.rotate}`);
+}
+await rotationTask.destroy();
 
 const splitSource = await PDFDocument.load(sourceBytes);
 const extractedPdf = await PDFDocument.create();

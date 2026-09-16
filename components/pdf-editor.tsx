@@ -26,6 +26,7 @@ import {
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
+import { uprightTextRotation } from '@/pdf/page-rotation.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
@@ -436,6 +437,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         size: fontSize,
         font,
         color: rgb(color.red, color.green, color.blue),
+        rotate: degrees(uprightTextRotation(page.getRotation().angle)),
       });
     });
     if (!saved) return;
