@@ -66,7 +66,7 @@ const CONTENT = {
     networkText: 'Il controllo degli aggiornamenti contatta GitHub all’avvio e quando lo richiedi. I PDF non vengono caricati. Anche i collegamenti al download, al sorgente e a Tomorrow Now aprono servizi esterni con proprie informative.',
     installTitle: 'Installazione in tre passaggi',
     installSteps: [
-      { title: 'Scarica', text: 'Scarica direttamente il file DMG ufficiale della versione 1.5.1.' },
+      { title: 'Scarica', text: 'Scarica direttamente il file DMG ufficiale della versione 1.6.0.' },
       { title: 'Installa', text: 'Apri il DMG e trascina Mac PDF Editor nella cartella Applicazioni.' },
       { title: 'Apri e aggiorna', text: 'Avvia l’app. Quando esce una nuova versione, vedrai “Aggiorna” oppure potrai usare Aiuto → Controlla aggiornamenti…' },
     ],
@@ -92,7 +92,7 @@ const CONTENT = {
     terms: 'Termini',
     licences: 'Licenze',
     webSource: 'Sorgente web',
-    companyNote: 'Versione Mac 1.5.1 · Dati societari e informazioni legali in aggiornamento.',
+    companyNote: 'Versione Mac 1.6.0 · Dati societari e informazioni legali in aggiornamento.',
   },
   en: {
     navigation: 'Main navigation',
@@ -129,7 +129,7 @@ const CONTENT = {
     networkText: 'The update checker contacts GitHub when the app starts and when you request a check. Your PDF is not uploaded. Download, source-code and Tomorrow Now links also open external services with their own privacy notices.',
     installTitle: 'Install in three steps',
     installSteps: [
-      { title: 'Download', text: 'Download the official DMG for version 1.5.1 directly.' },
+      { title: 'Download', text: 'Download the official DMG for version 1.6.0 directly.' },
       { title: 'Install', text: 'Open the DMG and drag Mac PDF Editor into the Applications folder.' },
       { title: 'Open and update', text: 'Launch the app. When a new version is available, you will see “Aggiorna”, or you can choose Aiuto → Controlla aggiornamenti… from the menu.' },
     ],
@@ -155,7 +155,7 @@ const CONTENT = {
     terms: 'Terms',
     licences: 'Licences',
     webSource: 'Web source code',
-    companyNote: 'Mac version 1.5.1 · Company details and legal information are being updated.',
+    companyNote: 'Mac version 1.6.0 · Company details and legal information are being updated.',
   },
 } as const;
 

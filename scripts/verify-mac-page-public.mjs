@@ -48,7 +48,7 @@ for (const page of pages) {
     `Release source link missing: ${page.path}`,
   );
   assert.ok(
-    html.includes('Mac-PDF-Editor-1.5.1-arm64.dmg'),
+    html.includes('Mac-PDF-Editor-1.6.0-arm64.dmg'),
     `DMG version missing: ${page.path}`,
   );
 }
