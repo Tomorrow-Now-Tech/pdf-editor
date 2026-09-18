@@ -60,7 +60,7 @@ test('English tools preserve functionality and have complete editorial content',
 });
 
 test('shared UI copy cannot silently fall back to untranslated Italian', async () => {
-  const allowed = new Set(['Tomorrow Now', 'PDF Editor', 'A Tomorrow Now product', 'Privacy', 'Open source', 'Mac', 'Web + Mac', '·', 'pt', 'Helvetica', 'Times', 'Courier', '/', '.']);
+  const allowed = new Set(['Tomorrow Now', 'PDF Editor', 'A Tomorrow Now product', 'Privacy', 'Open source', 'Mac', 'Web + Mac', '·', 'pt', 'Helvetica', 'Times', 'Courier', '/', '.', '%']);
   const files = ['components/home-page.tsx', 'components/pdf-editor.tsx', 'components/seo-tool-page.tsx', 'components/legal-page.tsx', 'components/company-details.tsx'];
   let translated = 0;
   for (const file of files) {

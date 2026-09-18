@@ -15,7 +15,11 @@ import {
   FileText,
   Grip,
   LoaderCircle,
+  Maximize2,
+  Minus,
+  MousePointer2,
   PencilLine,
+  Plus,
   RotateCw,
   Scissors,
   Trash2,
@@ -26,7 +30,7 @@ import {
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
-import { uprightTextRotation } from '@/pdf/page-rotation.mjs';
+import { clampZoom, materializeAddedTexts } from '@/pdf/added-text.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
@@ -39,6 +43,27 @@ type DraftText = {
   pdfX: number;
   pdfY: number;
   text: string;
+};
+
+type AddedTextObject = {
+  id: string;
+  page: number;
+  pdfX: number;
+  pdfY: number;
+  text: string;
+  fontFamily: FontFamily;
+  fontSize: number;
+  fontColor: string;
+};
+
+type TextDragState = {
+  kind: 'draft' | 'added';
+  id?: string;
+  startX: number;
+  startY: number;
+  initialX: number;
+  initialY: number;
+  fontSize: number;
 };
 
 type ExistingTextBox = {
@@ -141,7 +166,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const thumbnailGenerationRef = useRef(0);
   const loadGenerationRef = useRef(0);
   const thumbnailRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const dragState = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+  const dragState = useRef<TextDragState | null>(null);
   const focusDraftInput = useCallback((element: HTMLTextAreaElement | null) => {
     if (!element) return;
     requestAnimationFrame(() => {
@@ -162,6 +187,8 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [tool, setTool] = useState<ToolMode>(initialTool);
   const [draft, setDraft] = useState<DraftText | null>(null);
+  const [addedTexts, setAddedTexts] = useState<AddedTextObject[]>([]);
+  const [selectedAddedTextId, setSelectedAddedTextId] = useState<string | null>(null);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [fontSize, setFontSize] = useState(18);
@@ -171,13 +198,43 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const [splitTo, setSplitTo] = useState(1);
   const [visualEditAcknowledged, setVisualEditAcknowledged] = useState(false);
   const [hasVisualEdits, setHasVisualEdits] = useState(false);
+  const [zoomMode, setZoomMode] = useState<'fit' | 'custom'>('fit');
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const [renderedZoomPercent, setRenderedZoomPercent] = useState(100);
+  const [displayViewport, setDisplayViewport] = useState<PageViewport | null>(null);
 
   const selectedTextBox = textBoxes.find((box) => box.id === selectedTextId) || null;
+  const selectedAddedText = addedTexts.find((object) => object.id === selectedAddedTextId) || null;
+  const visibleAddedTexts = addedTexts.filter((object) => object.page === currentPage).map((object) => {
+    const viewport = displayViewport;
+    if (!viewport) return null;
+    const [screenX, baselineY] = viewport.convertToViewportPoint(object.pdfX, object.pdfY);
+    const screenFontSize = Math.max(6, object.fontSize * viewport.scale);
+    const longestLine = object.text.split('\n').reduce((longest, line) => Math.max(longest, line.length), 1);
+    return {
+      object,
+      screenX,
+      screenY: baselineY - screenFontSize,
+      screenFontSize,
+      width: Math.max(42, (longestLine * screenFontSize * 0.62) + 18),
+    };
+  }).filter((value): value is NonNullable<typeof value> => Boolean(value));
+
+  const displayedZoom = zoomMode === 'fit' ? renderedZoomPercent : zoomPercent;
+  const chooseZoom = (value: number) => {
+    setZoomMode('custom');
+    setZoomPercent(clampZoom(value));
+  };
+
+  const updateAddedText = (id: string, patch: Partial<AddedTextObject>) => {
+    setAddedTexts((values) => values.map((value) => value.id === id ? { ...value, ...patch } : value));
+  };
 
   const setActiveTool = (nextTool: ToolMode) => {
     setTool((value) => value === nextTool ? 'select' : nextTool);
     setDraft(null);
     setSelectedTextId(null);
+    if (nextTool !== 'select') setSelectedAddedTextId(null);
     setError('');
   };
 
@@ -197,9 +254,18 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     if (generation !== renderGenerationRef.current) return;
     const baseViewport = page.getViewport({ scale: 1 });
     const availableWidth = Math.max(280, Math.min(980, frame.clientWidth - 32));
-    const scale = Math.min(2, availableWidth / baseViewport.width);
+    const fitScale = Math.min(2, availableWidth / baseViewport.width);
+    const scale = zoomMode === 'fit' ? fitScale : clampZoom(zoomPercent) / 100;
     const viewport = page.getViewport({ scale });
     viewportRef.current = viewport;
+    setDisplayViewport(viewport);
+    const nextRenderedZoom = Math.round(scale * 100);
+    setRenderedZoomPercent((value) => value === nextRenderedZoom ? value : nextRenderedZoom);
+    setDraft((value) => {
+      if (!value) return value;
+      const [screenX, baselineY] = viewport.convertToViewportPoint(value.pdfX, value.pdfY);
+      return { ...value, screenX, screenY: baselineY - (fontSize * viewport.scale) };
+    });
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     const context = canvas.getContext('2d', { alpha: false });
     if (!context) return;
@@ -263,7 +329,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     } catch (renderError: unknown) {
       if (!(renderError instanceof Error) || renderError.name !== 'RenderingCancelledException') throw renderError;
     }
-  }, [currentPage, t]);
+  }, [canvasFrameRef, canvasRef, currentPage, fontSize, pdfDocumentRef, renderGenerationRef, renderTaskRef, setDisplayViewport, setDraft, setRenderedZoomPercent, t, viewportRef, zoomMode, zoomPercent]);
 
   const renderThumbnails = useCallback(async (pdf: PDFDocumentProxy, generation: number) => {
     setThumbnails(Array.from({ length: pdf.numPages }, () => ''));
@@ -317,6 +383,10 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         setFileName(nextName);
         setHasVisualEdits(false);
         setVisualEditAcknowledged(false);
+        setAddedTexts([]);
+        setSelectedAddedTextId(null);
+        setZoomMode('fit');
+        setZoomPercent(100);
       }
       setPageCount(pdf.numPages);
       setCurrentPage(Math.max(1, Math.min(preferredPage, pdf.numPages)));
@@ -325,6 +395,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       setDraft(null);
       setSelectedTextId(null);
       setTextBoxes([]);
+      setDisplayViewport(null);
       setDocumentVersion((value) => value + 1);
       setStatus(t("Documento elaborato soltanto nel browser"));
       void renderThumbnails(pdf, thumbnailGeneration);
@@ -340,7 +411,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     } finally {
       if (loadGeneration === loadGenerationRef.current) setBusy(false);
     }
-  }, [renderThumbnails, t, errorMessage]);
+  }, [errorMessage, loadingTaskRef, loadGenerationRef, pdfDocumentRef, renderGenerationRef, renderTaskRef, renderThumbnails, setAddedTexts, setBytes, setCurrentPage, setDisplayViewport, setDocumentVersion, setDraft, setFileName, setHasVisualEdits, setPageCount, setSelectedAddedTextId, setSelectedTextId, setSplitFrom, setSplitTo, setStatus, setTextBoxes, setVisualEditAcknowledged, setZoomMode, setZoomPercent, t, thumbnailGenerationRef]);
 
   const acceptFile = useCallback(async (file?: File) => {
     if (!file) return;
@@ -373,8 +444,12 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       if (!moving || !viewport) return;
       const screenX = Math.max(0, moving.initialX + event.clientX - moving.startX);
       const screenY = Math.max(0, moving.initialY + event.clientY - moving.startY);
-      const [pdfX, pdfY] = viewport.convertToPdfPoint(screenX, screenY + fontSize);
-      setDraft((value) => value && { ...value, screenX, screenY, pdfX, pdfY });
+      const [pdfX, pdfY] = viewport.convertToPdfPoint(screenX, screenY + (moving.fontSize * viewport.scale));
+      if (moving.kind === 'draft') {
+        setDraft((value) => value && { ...value, screenX, screenY, pdfX, pdfY });
+      } else if (moving.id) {
+        setAddedTexts((values) => values.map((value) => value.id === moving.id ? { ...value, pdfX, pdfY } : value));
+      }
     };
     const stop = () => { dragState.current = null; };
     window.addEventListener('pointermove', move);
@@ -383,7 +458,29 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
     };
-  }, [fontSize]);
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || !bytes) return;
+      const target = event.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
+      if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        setZoomMode('custom');
+        setZoomPercent(clampZoom((zoomMode === 'fit' ? renderedZoomPercent : zoomPercent) + 10));
+      } else if (event.key === '-') {
+        event.preventDefault();
+        setZoomMode('custom');
+        setZoomPercent(clampZoom((zoomMode === 'fit' ? renderedZoomPercent : zoomPercent) - 10));
+      } else if (event.key === '0') {
+        event.preventDefault();
+        setZoomMode('fit');
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [bytes, renderedZoomPercent, zoomMode, zoomPercent]);
 
   useEffect(() => {
     if (!bytes) return;
@@ -402,22 +499,37 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     void loadingTaskRef.current?.destroy();
   }, []);
 
+  const createMaterializedBytes = useCallback(async () => {
+    if (!bytes) return null;
+    if (!addedTexts.length) return bytes.slice();
+    const pdf = await PDFDocument.load(bytes.slice());
+    await materializeAddedTexts(pdf, addedTexts);
+    return pdf.save({ useObjectStreams: true });
+  }, [addedTexts, bytes]);
+
   const mutatePdf = useCallback(async (mutation: (pdf: PDFDocument) => Promise<void> | void, preferredPage = currentPage) => {
     if (!bytes || busy) return false;
     setBusy(true);
     setError('');
     try {
-      const pdf = await PDFDocument.load(bytes.slice());
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return false;
+      const pdf = await PDFDocument.load(materialized);
       await mutation(pdf);
       const saved = await pdf.save({ useObjectStreams: true });
-      return await loadBytes(saved, undefined, preferredPage);
+      const loaded = await loadBytes(saved, undefined, preferredPage);
+      if (loaded) {
+        setAddedTexts([]);
+        setSelectedAddedTextId(null);
+      }
+      return loaded;
     } catch (mutationError: unknown) {
       setError(errorMessage(mutationError, t("Modifica non riuscita.")));
       return false;
     } finally {
       setBusy(false);
     }
-  }, [bytes, busy, currentPage, loadBytes, errorMessage, t]);
+  }, [bytes, busy, currentPage, createMaterializedBytes, errorMessage, loadBytes, setAddedTexts, setBusy, setError, setSelectedAddedTextId, t]);
 
   const placeTextDraft = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if ((tool !== 'add' && tool !== 'edit') || !viewportRef.current) return;
@@ -436,32 +548,36 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       setFontFamily(nearby.fontFamily);
       setFontSize(Math.round(nearby.fontSize * 10) / 10);
     }
-    const [pdfX, pdfY] = viewportRef.current.convertToPdfPoint(screenX, screenY + draftFontSize);
+    const [pdfX, pdfY] = viewportRef.current.convertToPdfPoint(
+      screenX,
+      screenY + (draftFontSize * viewportRef.current.scale),
+    );
     setSelectedTextId(null);
     setDraft({ screenX, screenY, pdfX, pdfY, text: '' });
   };
 
-  const commitText = useCallback(async () => {
+  const commitText = useCallback(() => {
     if (!draft?.text.trim()) {
       setError(t("Scrivi il testo da aggiungere."));
       return;
     }
-    const saved = await mutatePdf(async (pdf) => {
-      const page = pdf.getPage(currentPage - 1);
-      const font = await pdf.embedFont(standardFontFor(fontFamily));
-      const color = hexToRgb(fontColor);
-      page.drawText(draft.text, {
-        x: draft.pdfX,
-        y: draft.pdfY,
-        size: fontSize,
-        font,
-        color: rgb(color.red, color.green, color.blue),
-        rotate: degrees(uprightTextRotation(page.getRotation().angle)),
-      });
-    });
-    if (!saved) return;
+    const id = globalThis.crypto?.randomUUID?.() || `text-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setAddedTexts((values) => [...values, {
+      id,
+      page: currentPage,
+      pdfX: draft.pdfX,
+      pdfY: draft.pdfY,
+      text: draft.text,
+      fontFamily,
+      fontSize,
+      fontColor,
+    }]);
+    setDraft(null);
+    setSelectedTextId(null);
+    setSelectedAddedTextId(id);
+    setTool('select');
     setStatus(t("Testo aggiunto. Scarica il PDF quando hai terminato."));
-  }, [draft, mutatePdf, currentPage, fontFamily, fontColor, fontSize, t]);
+  }, [currentPage, draft, fontColor, fontFamily, fontSize, setAddedTexts, setDraft, setSelectedAddedTextId, setSelectedTextId, setStatus, setTool, t]);
 
   useEffect(() => {
     if (!draft) return;
@@ -475,7 +591,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         setDraft(null);
         return;
       }
-      void commitText();
+      commitText();
     };
     document.addEventListener('pointerdown', commitOnOutsidePointer, true);
     return () => document.removeEventListener('pointerdown', commitOnOutsidePointer, true);
@@ -483,6 +599,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
 
   const selectExistingText = (box: ExistingTextBox) => {
     setDraft(null);
+    setSelectedAddedTextId(null);
     setSelectedTextId(box.id);
     setEditText(box.text);
     setFontFamily(box.fontFamily);
@@ -523,9 +640,20 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     setStatus(t("Modifica visiva applicata. Il testo originale resta recuperabile."));
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!bytes) return;
-    downloadBlob(new Blob([bytes.slice().buffer as ArrayBuffer], { type: 'application/pdf' }), safeDownloadName(fileName, locale));
+    setBusy(true);
+    setError('');
+    try {
+      const saved = await createMaterializedBytes();
+      if (!saved) return;
+      downloadBlob(new Blob([saved.buffer as ArrayBuffer], { type: 'application/pdf' }), safeDownloadName(fileName, locale));
+      setStatus(t("PDF pronto: testo incorporato nel documento scaricato."));
+    } catch (downloadError: unknown) {
+      setError(errorMessage(downloadError, t("Download non riuscito. Il documento aperto non è stato modificato.")));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const movePage = async (direction: -1 | 1) => {
@@ -534,13 +662,18 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     if (target < 0 || target >= pageCount) return;
     setBusy(true);
     try {
-      const source = await PDFDocument.load(bytes.slice());
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return;
+      const source = await PDFDocument.load(materialized);
       const reordered = await PDFDocument.create();
       const order = Array.from({ length: source.getPageCount() }, (_, index) => index);
       [order[currentPage - 1], order[target]] = [order[target], order[currentPage - 1]];
       const copiedPages = await reordered.copyPages(source, order);
       copiedPages.forEach((page) => reordered.addPage(page));
-      await loadBytes(await reordered.save({ useObjectStreams: true }), undefined, target + 1);
+      if (await loadBytes(await reordered.save({ useObjectStreams: true }), undefined, target + 1)) {
+        setAddedTexts([]);
+        setSelectedAddedTextId(null);
+      }
     } catch (moveError: unknown) {
       setError(errorMessage(moveError, t("Riordino non riuscito.")));
     } finally {
@@ -554,14 +687,19 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     setError('');
     setStatus(t("Ottimizzazione senza perdita…"));
     try {
-      const pdf = await PDFDocument.load(bytes.slice());
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return;
+      const pdf = await PDFDocument.load(materialized);
       const saved = await pdf.save({ useObjectStreams: true, addDefaultPage: false });
-      if (saved.length >= bytes.length) {
+      if (!addedTexts.length && saved.length >= bytes.length) {
         setStatus(t("Il PDF è già ottimizzato: nessun aumento inutile delle dimensioni."));
         return;
       }
       const savedPercent = Math.round((1 - saved.length / bytes.length) * 100);
-      await loadBytes(saved, undefined, currentPage);
+      if (await loadBytes(saved, undefined, currentPage)) {
+        setAddedTexts([]);
+        setSelectedAddedTextId(null);
+      }
       setStatus(message('optimised', { percent: savedPercent }));
     } catch (compressionError: unknown) {
       setError(errorMessage(compressionError, t("Compressione non riuscita.")));
@@ -577,8 +715,10 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     let strictTask: PDFDocumentLoadingTask | null = null;
     try {
       // Fresh worker/document: do not reuse partially decoded preview caches.
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return;
       const pdfjs = await importPdfJs();
-      strictTask = pdfjs.getDocument(pdfDocumentOptions(bytes));
+      strictTask = pdfjs.getDocument(pdfDocumentOptions(materialized));
       const sourcePdf = await strictTask.promise;
       const output = await PDFDocument.create();
       const saved = await rasterizeChecked(sourcePdf, (width: number, height: number) => {
@@ -594,6 +734,8 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       }
       const savedPercent = Math.round((1 - saved.length / bytes.length) * 100);
       if (!await loadBytes(saved, undefined, Math.min(currentPage, output.getPageCount()))) return;
+      setAddedTexts([]);
+      setSelectedAddedTextId(null);
       setStatus(message('compressed', { percent: savedPercent }));
     } catch (compressionError: unknown) {
       setError(`${t("Compressione interrotta: il PDF precedente è stato conservato.")} ${errorMessage(compressionError, t("Controlla il documento prima di riprovare."))}`);
@@ -611,7 +753,9 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     setBusy(true);
     setError('');
     try {
-      const source = await PDFDocument.load(bytes.slice());
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return;
+      const source = await PDFDocument.load(materialized);
       const output = await PDFDocument.create();
       const indexes = Array.from({ length: to - from + 1 }, (_, index) => from - 1 + index);
       const pages = await output.copyPages(source, indexes);
@@ -632,7 +776,9 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     setError('');
     try {
       const { default: JSZip } = await import('jszip');
-      const source = await PDFDocument.load(bytes.slice());
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return;
+      const source = await PDFDocument.load(materialized);
       const zip = new JSZip();
       for (let index = 0; index < source.getPageCount(); index += 1) {
         setStatus(message('splitting', { page: index + 1, count: source.getPageCount() }));
@@ -655,11 +801,16 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       setError(t("Conversione Word bloccata per questo documento: le modifiche visive lasciano il testo originale recuperabile, che verrebbe incluso nel DOCX. Usa un documento senza coperture di testo."));
       return;
     }
-    const sourcePdf = pdfDocumentRef.current;
-    if (!sourcePdf) return;
+    if (!bytes) return;
     setBusy(true);
     setError('');
+    let wordTask: PDFDocumentLoadingTask | null = null;
     try {
+      const materialized = await createMaterializedBytes();
+      if (!materialized) return;
+      const pdfjs = await importPdfJs();
+      wordTask = pdfjs.getDocument(pdfDocumentOptions(materialized));
+      const sourcePdf = await wordTask.promise;
       const { Document: WordDocument, Packer, PageBreak, Paragraph, TextRun } = await import('docx');
       const children: InstanceType<typeof Paragraph>[] = [];
       for (let pageNumber = 1; pageNumber <= sourcePdf.numPages; pageNumber += 1) {
@@ -686,6 +837,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     } catch (wordError: unknown) {
       setError(errorMessage(wordError, t("Conversione Word non riuscita.")));
     } finally {
+      await wordTask?.destroy().catch(() => undefined);
       setBusy(false);
     }
   };
@@ -725,6 +877,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       <EditorTopBar locale={locale} status={status} busy={busy} />
       <fieldset disabled={busy} className="m-0 min-w-0 border-0 p-0">
       <div className="flex flex-wrap items-center gap-2 border-b border-white/8 bg-[#0b0f1a] px-3 py-2.5">
+        <ToolbarButton active={tool === 'select'} onClick={() => setActiveTool('select')} title={t("Seleziona e sposta il testo aggiunto")}><MousePointer2 /><span>{t("Seleziona")}</span></ToolbarButton>
         <ToolbarButton active={tool === 'edit'} onClick={() => setActiveTool('edit')} title={t("Copri e riscrivi: l’originale resta recuperabile")}><PencilLine /><span>{t("Modifica PDF")}</span></ToolbarButton>
         <ToolbarButton active={tool === 'add'} onClick={() => setActiveTool('add')} title={t("Aggiungi testo")}><Type /><span>{t("Aggiungi testo")}</span></ToolbarButton>
         <ToolbarButton active={tool === 'compress'} onClick={() => setActiveTool('compress')} title={t("Comprimi PDF")}><FileArchive /><span className="hidden xl:inline">{t("Comprimi")}</span></ToolbarButton>
@@ -742,7 +895,16 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         <ToolbarButton disabled={pageCount <= 1} danger onClick={() => void mutatePdf((pdf) => pdf.removePage(currentPage - 1), Math.max(1, currentPage - 1))} title={t("Elimina pagina")}><Trash2 /></ToolbarButton>
         <ToolbarButton disabled={currentPage <= 1} onClick={() => void movePage(-1)} title={t("Sposta pagina prima")}><ChevronLeft /></ToolbarButton>
         <ToolbarButton disabled={currentPage >= pageCount} onClick={() => void movePage(1)} title={t("Sposta pagina dopo")}><ChevronRight /></ToolbarButton>
-        <button type="button" onClick={downloadPdf} className="brand-button ml-auto inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-bold text-white sm:text-sm"><ArrowDownToLine className="size-4" /> {t("Scarica PDF")}</button>
+        <div className="ml-auto flex h-9 items-center overflow-hidden rounded-lg border border-white/10 bg-white/[.035] text-slate-300">
+          <button type="button" onClick={() => chooseZoom(displayedZoom - 10)} className="grid h-full w-9 place-items-center hover:bg-white/[.07] hover:text-white" title={t("Riduci zoom")} aria-label={t("Riduci zoom")}><Minus className="size-4" /></button>
+          <label className="flex h-full items-center border-x border-white/10 px-1" title={t("Percentuale zoom")}>
+            <input type="number" min="35" max="250" step="5" value={displayedZoom} onChange={(event) => chooseZoom(Number(event.target.value))} className="w-12 bg-transparent text-center text-xs font-semibold text-white outline-none" aria-label={t("Percentuale zoom")} />
+            <span className="pr-1 text-[10px] text-slate-500">%</span>
+          </label>
+          <button type="button" onClick={() => chooseZoom(displayedZoom + 10)} className="grid h-full w-9 place-items-center hover:bg-white/[.07] hover:text-white" title={t("Aumenta zoom")} aria-label={t("Aumenta zoom")}><Plus className="size-4" /></button>
+          <button type="button" onClick={() => setZoomMode('fit')} className={`grid h-full w-9 place-items-center border-l border-white/10 hover:text-white ${zoomMode === 'fit' ? 'bg-cyan-300/12 text-cyan-200' : 'hover:bg-white/[.07]'}`} title={t("Adatta pagina")} aria-label={t("Adatta pagina")}><Maximize2 className="size-4" /></button>
+        </div>
+        <button type="button" onClick={() => void downloadPdf()} className="brand-button inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-bold text-white sm:text-sm"><ArrowDownToLine className="size-4" /> {t("Scarica PDF")}</button>
       </div>
 
       {error && <div role="alert" className="border-b border-red-300/15 bg-red-400/8 px-4 py-2 text-sm text-red-200">{error}</div>}
@@ -759,7 +921,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
                 key={`${index}-${thumbnail.slice(-12)}`}
                 ref={(element) => { thumbnailRefs.current[index] = element; }}
                 type="button"
-                onClick={() => { setDraft(null); setSelectedTextId(null); setCurrentPage(index + 1); }}
+                onClick={() => { setDraft(null); setSelectedTextId(null); setSelectedAddedTextId(null); setCurrentPage(index + 1); }}
                 className={`w-full rounded-xl border p-2 transition ${currentPage === index + 1 ? 'border-cyan-300/70 bg-cyan-300/8' : 'border-white/8 bg-white/[.02] hover:border-white/20'}`}
               >
                 {thumbnail ? (
@@ -774,7 +936,10 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
 
         <div ref={canvasFrameRef} className="editor-canvas-scroll relative flex min-h-0 items-start justify-center overflow-auto bg-[#171b24] p-3 sm:p-6">
           <div className="relative shrink-0 shadow-[0_24px_80px_rgba(0,0,0,.48)]">
-            <canvas ref={canvasRef} aria-label={message('preview', { page: currentPage, count: pageCount })} onClick={placeTextDraft} className={tool === 'add' || tool === 'edit' ? 'cursor-text bg-white' : 'bg-white'} />
+            <canvas ref={canvasRef} aria-label={message('preview', { page: currentPage, count: pageCount })} onClick={(event) => {
+              if (tool === 'select') setSelectedAddedTextId(null);
+              else placeTextDraft(event);
+            }} className={tool === 'add' || tool === 'edit' ? 'cursor-text bg-white' : 'bg-white'} />
             {tool === 'edit' && textBoxes.map((box) => (
               <button
                 key={box.id}
@@ -786,17 +951,47 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
                 style={{ left: box.screenX, top: box.screenY, width: box.screenWidth, height: box.screenHeight }}
               />
             ))}
+            {visibleAddedTexts.map(({ object, screenX, screenY, screenFontSize, width }) => (
+              <button
+                key={object.id}
+                type="button"
+                aria-label={`${t("Testo aggiunto")}: ${object.text}`}
+                title={t("Trascina per spostare; usa le proprietà per modificare")}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setTool('select');
+                  setDraft(null);
+                  setSelectedTextId(null);
+                  setSelectedAddedTextId(object.id);
+                  dragState.current = {
+                    kind: 'added',
+                    id: object.id,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    initialX: screenX,
+                    initialY: screenY,
+                    fontSize: object.fontSize,
+                  };
+                }}
+                className={`absolute z-[7] cursor-move whitespace-pre rounded border px-1 text-left leading-none transition ${selectedAddedTextId === object.id ? 'border-orange-400 bg-orange-300/12 shadow-[0_0_0_2px_rgba(251,146,60,.18)]' : 'border-transparent hover:border-orange-300/80 hover:bg-orange-300/8'}`}
+                style={{ left: screenX, top: screenY, width, minHeight: screenFontSize * 1.25, fontFamily: object.fontFamily, fontSize: screenFontSize, color: object.fontColor }}
+              >
+                {selectedAddedTextId === object.id && <Grip className="absolute -left-6 top-1/2 size-4 -translate-y-1/2 text-orange-400" />}
+                {object.text}
+              </button>
+            ))}
             {draft && (
               <div data-text-draft className="absolute z-10 flex min-w-44 items-start rounded-lg border border-cyan-400 bg-white shadow-2xl" style={{ left: draft.screenX, top: draft.screenY }}>
                 <button type="button" className="grid h-9 w-8 shrink-0 cursor-move place-items-center border-r border-slate-200 text-slate-500" title={t("Trascina per spostare")} onPointerDown={(event) => {
                   event.preventDefault();
-                  dragState.current = { startX: event.clientX, startY: event.clientY, initialX: draft.screenX, initialY: draft.screenY };
+                  dragState.current = { kind: 'draft', startX: event.clientX, startY: event.clientY, initialX: draft.screenX, initialY: draft.screenY, fontSize };
                 }}><Grip className="size-4" /></button>
                 <textarea ref={focusDraftInput} rows={1} value={draft.text} onChange={(event) => setDraft({ ...draft, text: event.target.value })} onBlur={(event) => {
                   const destination = event.relatedTarget;
                   if (destination instanceof Element
                     && destination.closest('[data-text-draft], [data-text-properties]')) return;
-                  if (draft.text.trim()) void commitText();
+                  if (draft.text.trim()) commitText();
                   else setDraft(null);
                 }} placeholder={t("Scrivi direttamente qui…")} className="min-h-9 min-w-56 resize both bg-transparent px-2 py-1.5 outline-none" style={{ fontFamily, fontSize, color: fontColor }} />
                 <button type="button" className="grid h-9 w-8 shrink-0 place-items-center text-slate-400 hover:text-slate-900" aria-label={t("Annulla testo")} onClick={() => setDraft(null)}><X className="size-4" /></button>
@@ -817,7 +1012,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
                   : t("Clicca un testo esistente per modificarlo oppure uno spazio vuoto per scrivere subito.")}</InfoBox>
               {draft && <>
                 <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
-                <button type="button" disabled={!draft.text.trim()} onClick={() => void commitText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
+                <button type="button" disabled={!draft.text.trim()} onClick={commitText} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
               </>}
               {!draft && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditAcknowledged(event.target.checked)} className="mt-1.5" />{t("Ho capito: il testo coperto resta recuperabile.")}</label>}
               {!draft && selectedTextBox && <>
@@ -833,7 +1028,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
             <div data-text-properties className="space-y-4">
               <InfoBox>{t("Scrivi direttamente nel riquadro: il testo viene applicato quando clicchi fuori.")}</InfoBox>
               <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
-              <button type="button" disabled={!draft?.text.trim()} onClick={() => void commitText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
+              <button type="button" disabled={!draft?.text.trim()} onClick={commitText} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
             </div>
           )}
           {tool === 'compress' && (
@@ -863,10 +1058,30 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
           )}
           {tool === 'select' && (
             <div className="space-y-3 text-sm text-slate-400">
-              <p className="font-semibold text-white">{fileName}</p>
-              <p>{message('page', { page: currentPage, count: pageCount })}</p>
-              <div className="rounded-xl border border-emerald-300/15 bg-emerald-300/[.05] p-3 text-sm leading-6 text-emerald-100/75">{t("Il documento resta nel browser. “Modifica visiva” copre le scritte senza eliminarle. Anche la conversione Word può recuperare testo nascosto presente nel PDF.")}</div>
-              <a href={SOURCE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-300 hover:text-cyan-200">{t("Consulta il codice sorgente")} <ChevronDown className="size-3 -rotate-90" /></a>
+              {selectedAddedText ? <>
+                <InfoBox>{t("Oggetto selezionato: trascinalo direttamente sulla pagina oppure modifica qui testo e stile.")}</InfoBox>
+                <label className="block text-xs font-semibold text-slate-400">{t("Testo aggiunto")}<textarea value={selectedAddedText.text} onChange={(event) => updateAddedText(selectedAddedText.id, { text: event.target.value })} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-orange-300/25 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-orange-300/60" /></label>
+                <TextStyleControls
+                  locale={locale}
+                  fontFamily={selectedAddedText.fontFamily}
+                  setFontFamily={(value) => updateAddedText(selectedAddedText.id, { fontFamily: value })}
+                  fontSize={selectedAddedText.fontSize}
+                  setFontSize={(value) => updateAddedText(selectedAddedText.id, { fontSize: value })}
+                  fontColor={selectedAddedText.fontColor}
+                  setFontColor={(value) => updateAddedText(selectedAddedText.id, { fontColor: value })}
+                />
+                <button type="button" onClick={() => {
+                  setAddedTexts((values) => values.filter((value) => value.id !== selectedAddedText.id));
+                  setSelectedAddedTextId(null);
+                  setStatus(t("Testo aggiunto eliminato."));
+                }} className="h-10 w-full rounded-lg border border-red-300/20 bg-red-300/[.04] text-sm font-semibold text-red-200 hover:bg-red-300/10"><Trash2 className="mr-2 inline size-4" />{t("Elimina testo aggiunto")}</button>
+              </> : <>
+                <p className="font-semibold text-white">{fileName}</p>
+                <p>{message('page', { page: currentPage, count: pageCount })}</p>
+                <InfoBox>{t("Usa la freccia per selezionare e trascinare i testi aggiunti in questa sessione. Per il testo già presente usa Modifica PDF.")}</InfoBox>
+                <div className="rounded-xl border border-emerald-300/15 bg-emerald-300/[.05] p-3 text-sm leading-6 text-emerald-100/75">{t("Il documento resta nel browser. “Modifica visiva” copre le scritte senza eliminarle. Anche la conversione Word può recuperare testo nascosto presente nel PDF.")}</div>
+                <a href={SOURCE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-300 hover:text-cyan-200">{t("Consulta il codice sorgente")} <ChevronDown className="size-3 -rotate-90" /></a>
+              </>}
             </div>
           )}
         </aside>
