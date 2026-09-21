@@ -3,7 +3,8 @@
 The English web edition lives at `/en`. Its tool pages are `/en/compress-pdf`,
 `/en/split-pdf`, `/en/pdf-to-word` and `/en/edit-pdf`. The Mac release page is
 `/en/pdf-editor-for-mac`. Privacy, terms and licences also have English pages.
-The existing Italian URLs have not changed.
+The practical date guide is available at `/aggiungere-data-pdf` and
+`/en/add-date-to-pdf`. The existing Italian URLs have not changed.
 
 ## Editorial rules
 
@@ -34,7 +35,7 @@ Separate root layouts in `app/(it)` and `app/en` set the HTML language at render
 time. Static page metadata puts titles, descriptions, canonical URLs and
 reciprocal language alternates in the initial head, without JavaScript or user
 agent detection. Each page canonicalises to itself; English pages do not
-canonicalise to Italian. The sitemap lists all 18 canonical URLs and alternates.
+canonicalise to Italian. The sitemap lists all 20 canonical URLs and alternates.
 
 The language selector links to the equivalent page, not just the homepage.
 Switching languages is a full navigation and closes the in-memory document.
@@ -48,7 +49,7 @@ There are no IP-based redirects, language cookies or automatic language changes.
 - Font round-trip tests save and extract English text, digits, punctuation and
   currency symbols with Helvetica, Times and Courier.
 - Existing PDF safety, decoder, ZIP, DOCX and provenance tests remain enabled.
-- `npm run ci:cloudflare` checks the production Worker and all 18 rendered pages,
+- `npm run ci:cloudflare` checks the production Worker and all 20 rendered pages,
   metadata, language alternates, source links, resources and unknown-route 404s.
 - The deployment pipeline repeats the HTML/SEO checks on the public website.
 

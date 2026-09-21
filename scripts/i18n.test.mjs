@@ -13,8 +13,8 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { pdfDocumentOptions } from '../pdf/runtime.mjs';
 
 test('language variants have distinct URLs, reciprocal alternates and self-canonicals', () => {
-  assert.equal(PUBLIC_PATHS.length, 18);
-  assert.equal(new Set(PUBLIC_PATHS).size, 18);
+  assert.equal(PUBLIC_PATHS.length, 20);
+  assert.equal(new Set(PUBLIC_PATHS).size, 20);
   for (const pair of ROUTE_PAIRS) {
     for (const locale of ['it', 'en']) {
       assert.equal(localizedPath(pair.it, locale), pair[locale]);

@@ -3,6 +3,7 @@ import { localizedPath, type Locale } from '@/i18n/routes.mjs';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import {
   ArrowRight,
+  CalendarDays,
   Download,
   ExternalLink,
   FileArchive,
@@ -87,6 +88,18 @@ export function HomePage({ locale = 'it' }: { locale?: Locale }) {
             <Capability href={path("/pdf-in-word")} icon={<FileText />} title={t("PDF in Word")} text={t("Estrai il testo in un documento DOCX realmente modificabile.")} />
           </nav>
         </div>
+      </section>
+
+      <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <Link href={path("/aggiungere-data-pdf")} className="group mx-auto flex max-w-[1200px] flex-col gap-5 rounded-[28px] border border-cyan-300/20 bg-gradient-to-r from-cyan-300/[.07] via-blue-500/[.05] to-fuchsia-400/[.06] p-6 transition hover:border-cyan-300/40 sm:flex-row sm:items-center sm:p-8">
+          <span className="grid size-14 shrink-0 place-items-center rounded-2xl border border-cyan-300/20 bg-cyan-300/[.08] text-cyan-200"><CalendarDays className="size-6" /></span>
+          <div className="flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-[.18em] text-cyan-200">{t("Guida pratica")}</p>
+            <h2 className="mt-2 text-2xl font-bold text-white">{t("Come aggiungere una data a un PDF")}</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{t("Esempio sintetico e passaggi precisi per scrivere, posizionare e controllare una data prima del download.")}</p>
+          </div>
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-white">{t("Leggi la guida")}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span>
+        </Link>
       </section>
 
       <section id="privacy" className="border-y border-white/8 bg-white/[.018] px-4 py-16 sm:px-6 lg:px-8">

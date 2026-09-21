@@ -94,7 +94,9 @@ export function SeoToolPage({ tool, locale = 'it' }: { tool: ToolPage; locale?: 
             {tool.intro}
           </p>
         </div>
-        <PdfEditor locale={locale} initialTool={tool.mode} uploadHint={tool.uploadHint} />
+        <div id="editor-pdf" className="scroll-mt-24">
+          <PdfEditor locale={locale} initialTool={tool.mode} uploadHint={tool.uploadHint} />
+        </div>
         <section className="py-12" aria-labelledby="come-funziona">
           <h2 id="come-funziona" className="text-2xl font-bold text-white"> {locale === 'en' ? 'How it works' : `Come usare ${tool.label.toLowerCase()}`}
           </h2>
@@ -161,6 +163,16 @@ export function SeoToolPage({ tool, locale = 'it' }: { tool: ToolPage; locale?: 
             ))}
           </dl>
         </section>
+        {tool.mode === 'edit' && <section className="pb-12">
+          <Link href={path('/aggiungere-data-pdf')} className="group flex flex-col gap-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/[.05] p-6 transition hover:border-cyan-300/40 sm:flex-row sm:items-center">
+            <div className="flex-1">
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-cyan-200">{t("Guida pratica")}</p>
+              <h2 className="mt-2 text-xl font-bold text-white">{t("Come aggiungere una data a un PDF")}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{t("Segui un esempio sintetico per inserire la data, riprenderla con la freccia e controllare la copia scaricata.")}</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-white">{t("Leggi la guida")}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span>
+          </Link>
+        </section>}
         <nav
           aria-label={t("Altri strumenti PDF")}
           className="flex flex-wrap gap-3 pb-10"

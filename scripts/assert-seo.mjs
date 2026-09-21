@@ -120,9 +120,21 @@ export async function assertSeo(get) {
       assert.ok(html.includes('Apple Silicon'), `Mac compatibility missing: ${path}`);
       assert.ok(html.includes('100 MB') && (html.includes('1.000') || html.includes('1,000')), `Mac limits missing: ${path}`);
     }
+    if (path === '/aggiungere-data-pdf' || path === '/en/add-date-to-pdf') {
+      const expectedHeading = locale === 'en'
+        ? 'How to add a date to a PDF online'
+        : 'Come aggiungere una data a un PDF online';
+      const editorPath = locale === 'en' ? '/en/edit-pdf#editor-pdf' : '/modifica-pdf#editor-pdf';
+      assert.ok(html.includes(expectedHeading), `Guide heading missing: ${path}`);
+      assert.ok(html.includes('21/09/2026'), `Synthetic date example missing: ${path}`);
+      assert.ok(html.includes(`href="${editorPath}"`), `Guide editor link missing: ${path}`);
+      const scripts = [...html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)];
+      const article = scripts.map((match) => JSON.parse(match[1])).find((data) => data['@type'] === 'Article');
+      assert.equal(article?.mainEntityOfPage, canonicalUrl(path), `Guide article data mismatch: ${path}`);
+    }
   }
   for (const unknown of ['/en/not-a-real-tool', '/fr', '/en/comprimi-pdf']) assert.equal((await get(unknown)).status, 404, unknown);
   console.log(
-    `SEO verified: ${paths.length} canonical pages, sitemap, robots, public verification tag and crawlable tool content.`,
+    `SEO verified: ${paths.length} canonical pages, sitemap, robots, public verification tag and crawlable tool or guide content.`,
   );
 }
