@@ -165,7 +165,7 @@ export const EN = {
   'Scopri gli altri prodotti e le soluzioni digitali Tomorrow Now.': 'Discover more products and digital solutions from Tomorrow Now.',
   'Informazioni sul servizio': 'Service information',
   'Informazioni legali': 'Legal information',
-  'Informazioni in aggiornamento: partita IVA e PEC sono indicate come “in fase di emissione”. I dati societari e i testi legali restano da completare e sottoporre a revisione professionale.': 'These details are being updated. The VAT number and Italian certified email address (PEC) are listed as pending. Company information and legal notices still need to be completed and professionally reviewed.',
+  'I dati societari sono aggiornati. I testi legali restano da completare e sottoporre a revisione professionale.': 'The company details are up to date. The legal notices still need to be completed and professionally reviewed.',
   'Sorgente di questa versione web': 'Source code for this web version',
   'Partita IVA:': 'VAT number:',
   'PEC:': 'Certified email (PEC):',

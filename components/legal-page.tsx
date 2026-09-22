@@ -21,7 +21,7 @@ export function LegalPage({ title, intro, children, locale = 'it', path: current
           <p className="eyebrow">{t("Informazioni legali")}</p>
           <h1>{title}</h1>
           <p className="legal-lead">{intro}</p>
-          <div className="my-7 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100/80"> {t("Informazioni in aggiornamento: partita IVA e PEC sono indicate come “in fase di emissione”. I dati societari e i testi legali restano da completare e sottoporre a revisione professionale.")} </div>
+          <div className="my-7 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100/80"> {t("I dati societari sono aggiornati. I testi legali restano da completare e sottoporre a revisione professionale.")} </div>
           {children}
         </article>
         <div className="flex flex-wrap gap-5 py-8 text-xs text-slate-500">

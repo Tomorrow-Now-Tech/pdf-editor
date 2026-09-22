@@ -35,7 +35,7 @@ export default function LicensesPage() {
       <h2>Revisione professionale</h2>
       <p>Licenza, avvisi di terze parti e modalità di offerta del servizio devono essere verificati da un professionista prima del lancio definitivo.</p>
 
-      <p className="legal-date">Bozza aggiornata il 3 settembre 2026. Le condizioni del servizio e l’informativa privacy sono separate dalla licenza del software.</p>
+      <p className="legal-date">Bozza aggiornata il 22 settembre 2026. Le condizioni del servizio e l’informativa privacy sono separate dalla licenza del software.</p>
     </LegalPage>
   );
 }

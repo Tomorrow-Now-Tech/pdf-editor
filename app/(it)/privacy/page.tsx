@@ -11,7 +11,7 @@ export default function PrivacyPage() {
     <LegalPage path="/privacy" title="Informativa privacy" intro="Informazioni preliminari sulla versione browser, sull’app Mac e sui contatti di assistenza.">
       <h2>1. Titolare del trattamento</h2>
       <CompanyDetails className="my-5" />
-      <p>I dati sopra riportati sono quelli comunicati dal gestore. Partita IVA e PEC sono indicate come “in fase di emissione” e saranno aggiornate quando disponibili; l’anagrafica completa e l’informativa restano da verificare. Il marchio del servizio è Tomorrow Now.</p>
+      <p>I dati sopra riportati sono quelli comunicati dal gestore. L’informativa resta da completare e verificare professionalmente. Il marchio del servizio è Tomorrow Now.</p>
 
       <h2>2. Contenuto dei PDF</h2>
       <p>La versione browser apre e modifica i documenti nella memoria del dispositivo dell’utente. Il codice dell’editor non invia a Tomorrow Now il contenuto dei PDF selezionati e non richiede un account.</p>
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
       <h2>8. Assistenza e segnalazioni di sicurezza</h2>
       <p>Per assistenza e segnalazioni puoi contattare {COMPANY.name} a <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>. Se invii una richiesta o una segnalazione, il destinatario riceve il tuo indirizzo email, il contenuto del messaggio e gli eventuali allegati. Non allegare PDF di clienti, firme o altri dati riservati: usa esempi sintetici o privi di dati personali. Finalità, base giuridica, modalità di gestione e tempi di conservazione di questo canale restano da completare e confermare.</p>
 
-      <p className="legal-date">Aggiornata il 3 settembre 2026. Informativa ancora da completare e sottoporre a revisione professionale.</p>
+      <p className="legal-date">Aggiornata il 22 settembre 2026. Informativa ancora da completare e sottoporre a revisione professionale.</p>
     </LegalPage>
   );
 }

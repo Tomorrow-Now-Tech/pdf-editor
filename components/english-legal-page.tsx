@@ -23,7 +23,7 @@ function Privacy() {
   return <LegalPage locale="en" path="/en/privacy" title="Privacy notice" intro="Preliminary information about the browser editor, the Mac app and support enquiries.">
     <h2>1. Data controller</h2>
     <CompanyDetails locale="en" className="my-5" />
-    <p>The details above were supplied by the service operator. The VAT number and Italian certified email address (PEC) are listed as pending and will be updated when available. The full company details and this notice still need to be verified. The service operates under the Tomorrow Now brand.</p>
+    <p>The details above were supplied by the service operator. This notice still needs to be completed and professionally reviewed. The service operates under the Tomorrow Now brand.</p>
     <h2>2. PDF contents</h2>
     <p>The browser editor opens and modifies documents in the memory of your device. The editor’s code does not send the contents of selected PDFs to Tomorrow Now and does not require an account.</p>
     <p>The public editor is available without registration. It does not manage its own user accounts. Private previews may require you to sign in through the hosting service.</p>
@@ -42,7 +42,7 @@ function Privacy() {
     <p>The update checker contacts GitHub after the app starts and when you request a check. These requests disclose at least your IP address and technical connection information to the provider; they do not upload your document. Links to source code, downloads and the Tomorrow Now website also open services with their own privacy notices. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub’s privacy statement</a>.</p>
     <h2>8. Support and security reports</h2>
     <p>For support or security reports, contact {COMPANY.name} at <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>. If you send an enquiry or report, the recipient receives your email address, message and any attachments. Do not attach client PDFs, signatures or other confidential information. Use synthetic examples or material without personal data. The purposes, legal basis, handling procedures and retention periods for this contact channel still need to be completed and confirmed.</p>
-    <p className="legal-date">Updated on 3 September 2026. This notice still needs to be completed and professionally reviewed. English translation prepared on 4 September 2026.</p>
+    <p className="legal-date">Updated on 22 September 2026. This notice still needs to be completed and professionally reviewed.</p>
   </LegalPage>;
 }
 
@@ -52,7 +52,7 @@ function Terms() {
     <p>Tomorrow Now PDF Editor is a free tool for working with PDF documents in a browser or through the Mac app. Features may change over time, and the web version is labelled as beta.</p>
     <p>Service operator:</p>
     <CompanyDetails locale="en" className="my-5" />
-    <p>The VAT number and Italian certified email address (PEC) are listed as pending and will be added when available. These provisional details do not replace the need to complete and review the legal information.</p>
+    <p>The company details above are up to date. These terms remain preliminary and still need to be completed and professionally reviewed.</p>
     <h2>2. Local processing</h2>
     <p>The browser version processes your document on your device. You must still take appropriate steps to protect your device, browser and downloaded copies.</p>
     <h2>3. Permitted use</h2>
@@ -65,7 +65,7 @@ function Terms() {
     <p>The AGPL governs rights in the software. These terms instead concern use of the service. Referring to the licence does not replace applicable mandatory protections or constitute a waiver of your rights.</p>
     <h2>6. Brands and non-affiliation</h2>
     <p>Tomorrow Now PDF Editor is an independent project. It is not affiliated with, sponsored by or endorsed by Adobe Inc. or Apple Inc.</p>
-    <p className="legal-date">Draft updated on 3 September 2026. Governing law, jurisdiction and liability clauses remain subject to professional review. English translation prepared on 4 September 2026.</p>
+    <p className="legal-date">Draft updated on 22 September 2026. Governing law, jurisdiction and liability clauses remain subject to professional review.</p>
   </LegalPage>;
 }
 
@@ -94,6 +94,6 @@ function Licences() {
     <p>The source code licence does not grant the right to use the Tomorrow Now name, logos or app icon to present a modified build as an official release.</p>
     <h2>Professional review</h2>
     <p>The licence, third-party notices and the way the service is offered must be reviewed by a professional before the final launch.</p>
-    <p className="legal-date">Draft updated on 3 September 2026. The terms of service and privacy notice are separate from the software licence. English translation prepared on 4 September 2026.</p>
+    <p className="legal-date">Draft updated on 22 September 2026. The terms of service and privacy notice are separate from the software licence.</p>
   </LegalPage>;
 }

@@ -38,7 +38,9 @@ for (const path of ['/', '/privacy', '/terms', '/licenses']) {
   assert.equal(response.headers.get('set-cookie'), null, 'Unexpected account/tracking cookie');
   const html = await response.text();
   assert.ok(html.includes(`${SOURCE_REPOSITORY}/tree/${revision}`), `Exact source link missing: ${path}`);
-  assert.ok(html.includes('(in fase di emissione)'), `Company details missing: ${path}`);
+  assert.ok(html.includes('13513640014'), `VAT number missing: ${path}`);
+  assert.ok(html.includes('tomorrownow@pec.it'), `PEC missing: ${path}`);
+  assert.ok(html.includes('Tomorrow Now S.r.l. a socio unico'), `Company legal form missing: ${path}`);
   if (path === '/privacy') assert.ok(html.includes('senza passare da Sites'));
   if (path === '/') assert.equal(html.split(`href="${MAC_DMG_DOWNLOAD_URL}"`).length - 1, 2, 'Both Mac download buttons must link directly to the DMG');
 }

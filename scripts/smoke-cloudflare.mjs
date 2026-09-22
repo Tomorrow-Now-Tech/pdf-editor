@@ -45,7 +45,9 @@ try {
     assert.equal(response.headers.get('set-cookie'), null, 'The editor must not set an account cookie');
     const html = await response.text();
     assert.ok(html.includes('Tomorrow Now'), path);
-    assert.ok(html.includes('(in fase di emissione)'), path);
+    assert.ok(html.includes('13513640014'), path);
+    assert.ok(html.includes('tomorrownow@pec.it'), path);
+    assert.ok(html.includes('Tomorrow Now S.r.l. a socio unico'), path);
     assert.ok(html.includes(`${SOURCE_REPOSITORY}/tree/${revision}`), 'Exact source link missing');
     if (path === '/privacy') assert.ok(html.includes('senza passare da Sites'));
     if (path === '/') assert.equal(html.split(`href="${MAC_DMG_DOWNLOAD_URL}"`).length - 1, 2, 'Both Mac download buttons must link directly to the DMG');

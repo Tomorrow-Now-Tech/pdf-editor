@@ -11,7 +11,7 @@ export default function TermsPage() {
       <p>Tomorrow Now PDF Editor è uno strumento gratuito per svolgere operazioni su documenti PDF nel browser o tramite l’app Mac. Le funzioni possono cambiare nel tempo e la versione web è indicata come beta.</p>
       <p>Dati del gestore:</p>
       <CompanyDetails className="my-5" />
-      <p>Partita IVA e PEC sono indicate come “in fase di emissione” e saranno aggiunte quando disponibili. Questi dati provvisori non sostituiscono il completamento e la revisione delle informazioni legali.</p>
+      <p>I dati societari sopra riportati sono aggiornati. Le presenti condizioni restano preliminari e devono essere completate e sottoposte a revisione professionale.</p>
 
       <h2>2. Elaborazione locale</h2>
       <p>Nella versione browser il documento viene elaborato sul dispositivo. L’utente deve comunque adottare misure adeguate per proteggere il proprio dispositivo, il browser e le copie scaricate.</p>
@@ -30,7 +30,7 @@ export default function TermsPage() {
       <h2>6. Marchi e assenza di affiliazione</h2>
       <p>Tomorrow Now PDF Editor è un progetto indipendente. Non è affiliato, sponsorizzato o approvato da Adobe Inc. o Apple Inc.</p>
 
-      <p className="legal-date">Bozza aggiornata il 3 settembre 2026. Legge applicabile, foro e clausole di responsabilità restano soggetti a revisione professionale.</p>
+      <p className="legal-date">Bozza aggiornata il 22 settembre 2026. Legge applicabile, foro e clausole di responsabilità restano soggetti a revisione professionale.</p>
     </LegalPage>
   );
 }

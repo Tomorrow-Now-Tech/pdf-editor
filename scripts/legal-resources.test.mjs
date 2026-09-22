@@ -38,12 +38,12 @@ test('Mac download links target the installer and keep source links separate', a
   assert.match(MAC_DMG_SHA256, /^[a-f0-9]{64}$/);
 });
 
-test('operator details preserve the supplied contact and mark unknown identifiers as pending', async () => {
-  assert.equal(COMPANY.name, 'Tomorrow Now S.r.l.');
+test('operator details preserve the supplied company and contact information', async () => {
+  assert.equal(COMPANY.name, 'Tomorrow Now S.r.l. a socio unico');
   assert.equal(COMPANY.address, 'Corso Galileo Ferraris 53 — 10128 Torino');
   assert.equal(COMPANY.email, 'info@tomorrownow.tech');
-  assert.equal(COMPANY.vat, null);
-  assert.equal(COMPANY.pec, null);
+  assert.equal(COMPANY.vat, '13513640014');
+  assert.equal(COMPANY.pec, 'tomorrownow@pec.it');
   assert.equal(PENDING_COMPANY_DETAIL, '(in fase di emissione)');
   const component = await readFile(`${root}/components/company-details.tsx`, 'utf8');
   assert.ok(component.includes('COMPANY.vat ?? t(PENDING_COMPANY_DETAIL)'));
