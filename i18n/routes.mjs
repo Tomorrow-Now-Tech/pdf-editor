@@ -8,6 +8,7 @@ export const ROUTE_PAIRS = [
   { it: '/pdf-in-word', en: '/en/pdf-to-word' },
   { it: '/modifica-pdf', en: '/en/edit-pdf' },
   { it: '/aggiungere-data-pdf', en: '/en/add-date-to-pdf' },
+  { it: '/pdf-troppo-pesante-email', en: '/en/pdf-too-large-for-email' },
   { it: '/editor-pdf-mac', en: '/en/pdf-editor-for-mac' },
   { it: '/privacy', en: '/en/privacy' },
   { it: '/terms', en: '/en/terms' },

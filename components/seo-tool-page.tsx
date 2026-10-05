@@ -173,6 +173,16 @@ export function SeoToolPage({ tool, locale = 'it' }: { tool: ToolPage; locale?: 
             <span className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-white">{t("Leggi la guida")}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span>
           </Link>
         </section>}
+        {tool.mode === 'compress' && <section className="pb-12">
+          <Link href={path('/pdf-troppo-pesante-email')} className="group flex flex-col gap-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/[.05] p-6 transition hover:border-cyan-300/40 sm:flex-row sm:items-center">
+            <div className="flex-1">
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-cyan-200">{t("Guida alla compressione")}</p>
+              <h2 className="mt-2 text-xl font-bold text-white">{t("PDF troppo pesante per email?")}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{t("Confronta le due modalità con un test sintetico misurato e controlla il risultato prima dell’invio.")}</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-white">{t("Leggi la guida")}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span>
+          </Link>
+        </section>}
         <nav
           aria-label={t("Altri strumenti PDF")}
           className="flex flex-wrap gap-3 pb-10"

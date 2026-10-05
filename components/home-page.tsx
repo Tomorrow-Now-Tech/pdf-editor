@@ -91,15 +91,24 @@ export function HomePage({ locale = 'it' }: { locale?: Locale }) {
       </section>
 
       <section className="px-4 pb-16 sm:px-6 lg:px-8">
-        <Link href={path("/aggiungere-data-pdf")} className="group mx-auto flex max-w-[1200px] flex-col gap-5 rounded-[28px] border border-cyan-300/20 bg-gradient-to-r from-cyan-300/[.07] via-blue-500/[.05] to-fuchsia-400/[.06] p-6 transition hover:border-cyan-300/40 sm:flex-row sm:items-center sm:p-8">
-          <span className="grid size-14 shrink-0 place-items-center rounded-2xl border border-cyan-300/20 bg-cyan-300/[.08] text-cyan-200"><CalendarDays className="size-6" /></span>
-          <div className="flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[.18em] text-cyan-200">{t("Guida pratica")}</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">{t("Come aggiungere una data a un PDF")}</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{t("Esempio sintetico e passaggi precisi per scrivere, posizionare e controllare una data prima del download.")}</p>
-          </div>
-          <span className="inline-flex items-center gap-2 text-sm font-bold text-white">{t("Leggi la guida")}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span>
-        </Link>
+        <div className="mx-auto grid max-w-[1200px] gap-5 lg:grid-cols-2">
+          <GuideCard
+            href={path("/aggiungere-data-pdf")}
+            icon={<CalendarDays className="size-6" />}
+            eyebrow={t("Guida pratica")}
+            title={t("Come aggiungere una data a un PDF")}
+            text={t("Esempio sintetico e passaggi precisi per scrivere, posizionare e controllare una data prima del download.")}
+            cta={t("Leggi la guida")}
+          />
+          <GuideCard
+            href={path("/pdf-troppo-pesante-email")}
+            icon={<FileArchive className="size-6" />}
+            eyebrow={t("Guida alla compressione")}
+            title={t("PDF troppo pesante per email?")}
+            text={t("Metodo verificato per misurare il file, scegliere la compressione e controllare la qualità prima dell’invio.")}
+            cta={t("Leggi la guida")}
+          />
+        </div>
       </section>
 
       <section id="privacy" className="border-y border-white/8 bg-white/[.018] px-4 py-16 sm:px-6 lg:px-8">
@@ -207,6 +216,20 @@ function Capability({ href, icon, title, text }: { href: string; icon: React.Rea
         <h3 className="text-sm font-bold text-white">{title}</h3>
         <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
       </div>
+    </Link>
+  );
+}
+
+function GuideCard({ href, icon, eyebrow, title, text, cta }: { href: string; icon: React.ReactNode; eyebrow: string; title: string; text: string; cta: string }) {
+  return (
+    <Link href={href} className="group flex h-full flex-col rounded-[28px] border border-cyan-300/20 bg-gradient-to-br from-cyan-300/[.07] via-blue-500/[.05] to-fuchsia-400/[.06] p-6 transition hover:border-cyan-300/40 sm:p-8">
+      <span className="grid size-14 shrink-0 place-items-center rounded-2xl border border-cyan-300/20 bg-cyan-300/[.08] text-cyan-200">{icon}</span>
+      <div className="mt-5 flex-1">
+        <p className="text-[11px] font-bold uppercase tracking-[.18em] text-cyan-200">{eyebrow}</p>
+        <h2 className="mt-2 text-2xl font-bold text-white">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-300">{text}</p>
+      </div>
+      <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white">{cta}<ArrowRight className="size-4 transition group-hover:translate-x-1" /></span>
     </Link>
   );
 }
