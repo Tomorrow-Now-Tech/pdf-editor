@@ -30,7 +30,7 @@ import {
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
-import { clampZoom, materializeAddedTexts, textEditConsentKey } from '@/pdf/added-text.mjs';
+import { clampZoom, focusConnectedDraft, materializeAddedTexts, textEditConsentKey } from '@/pdf/added-text.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
@@ -168,10 +168,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const thumbnailRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dragState = useRef<TextDragState | null>(null);
   const focusDraftInput = useCallback((element: HTMLTextAreaElement | null) => {
-    if (!element) return;
-    requestAnimationFrame(() => {
-      if (element.isConnected) element.focus();
-    });
+    focusConnectedDraft(element);
   }, []);
 
   const [bytes, setBytes] = useState<Uint8Array | null>(null);

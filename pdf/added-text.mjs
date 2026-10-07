@@ -15,6 +15,13 @@ export function textEditConsentKey(revision, page, targetId, font, text, size) {
   return JSON.stringify([revision, page, targetId, font, text, size]);
 }
 
+/** Focus at mount time, without a deferred callback stealing later input.
+ * @param {{isConnected: boolean, focus: (options?: {preventScroll?: boolean}) => void} | null} element
+ */
+export function focusConnectedDraft(element) {
+  if (element?.isConnected) element.focus({ preventScroll: true });
+}
+
 /** @param {string} value */
 function colour(value) {
   const normalized = /^#[0-9a-f]{6}$/i.test(value) ? value.slice(1) : '111827';
