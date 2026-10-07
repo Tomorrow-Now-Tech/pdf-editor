@@ -90,6 +90,9 @@ test('progress, safety messages and image failures are localised without losing 
   const placeholders = value => [...value.matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort();
   for (const key of Object.keys(FORMATS.en)) assert.deepEqual(placeholders(FORMATS.en[key]), placeholders(FORMATS.it[key]));
   assert.equal(formatMessage('en', 'preview', { page: 6, count: 12 }), 'PDF preview, page 6 of 12');
+  assert.equal(formatMessage('en', 'fontConsent', { font: 'Times-Roman' }),
+    'I agree to use Times-Roman as a substitute font. I understand that the covered text can still be recovered.');
+  assert.match(formatMessage('it', 'fontConsent', { font: 'Helvetica' }), /Helvetica.*sostitutivo.*recuperabile/);
   const failure = new Error('Pagina 6: immagine non decodificata. Il PDF precedente è stato conservato.');
   assert.match(localizedError(failure, 'Failed', 'en'), /page 6.*could not be decoded.*previous PDF has been kept/);
   assert.equal(localizedError(failure, 'Errore', 'it'), failure.message);

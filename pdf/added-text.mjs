@@ -7,6 +7,14 @@ const FONT_NAMES = {
   Courier: StandardFonts.Courier,
 };
 
+/** Bind visual-edit consent to the exact document, target and proposed font.
+ * @param {number} revision @param {number} page @param {string} targetId
+ * @param {string} font @param {string} text @param {number} size
+ */
+export function textEditConsentKey(revision, page, targetId, font, text, size) {
+  return JSON.stringify([revision, page, targetId, font, text, size]);
+}
+
 /** @param {string} value */
 function colour(value) {
   const normalized = /^#[0-9a-f]{6}$/i.test(value) ? value.slice(1) : '111827';

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { PDFDocument } from 'pdf-lib';
 import { getDocument, Util } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { clampZoom, materializeAddedTexts } from '../pdf/added-text.mjs';
+import { clampZoom, materializeAddedTexts, textEditConsentKey } from '../pdf/added-text.mjs';
 import { pdfDocumentOptions } from '../pdf/runtime.mjs';
 
 const options = (data) => ({ ...pdfDocumentOptions(data, `${import.meta.dirname}/../public/pdfjs/`), useWorkerFetch: false });
@@ -12,6 +12,17 @@ test('zoom is bounded and normalises invalid input', () => {
   assert.equal(clampZoom(107.4), 107);
   assert.equal(clampZoom(300), 250);
   assert.equal(clampZoom(Number.NaN), 100);
+});
+
+test('visual font consent cannot carry over to another document, target or edit', () => {
+  const approved = [1, 1, '1-0', 'Helvetica', 'DATE 6', 12];
+  const key = textEditConsentKey(...approved);
+  assert.equal(textEditConsentKey(...approved), key);
+  for (const [index, value] of [[0, 2], [1, 2], [2, '1-1'], [3, 'Times-Roman'], [4, 'DATE 7'], [5, 18]]) {
+    const changed = [...approved];
+    changed[index] = value;
+    assert.notEqual(textEditConsentKey(...changed), key);
+  }
 });
 
 test('a moved session text object is materialised once at its final coordinates', async () => {

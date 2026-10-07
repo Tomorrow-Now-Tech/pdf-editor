@@ -200,6 +200,7 @@ export const FORMATS = {
     splitting: 'Divisione: pagina {page} di {count}…', word: 'Conversione Word: pagina {page} di {count}…',
     imageError: 'Pagina {page}: immagine non decodificata. Il PDF precedente è stato conservato.',
     leave: 'Cambiare lingua chiude il PDF aperto. Scarica prima le modifiche da conservare. Vuoi continuare?',
+    fontConsent: 'Userò {font} come carattere sostitutivo. Ho capito che il testo coperto resta recuperabile.',
   },
   en: {
     page: 'Page {page} of {count}', preview: 'PDF preview, page {page} of {count}',
@@ -211,6 +212,7 @@ export const FORMATS = {
     splitting: 'Splitting page {page} of {count}…', word: 'Creating Word document: page {page} of {count}…',
     imageError: 'An image on page {page} could not be decoded. Your previous PDF has been kept.',
     leave: 'Changing language will close your current PDF. Download any changes you want to keep first. Continue?',
+    fontConsent: 'I agree to use {font} as a substitute font. I understand that the covered text can still be recovered.',
   },
 };
 

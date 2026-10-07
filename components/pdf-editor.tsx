@@ -30,7 +30,7 @@ import {
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
-import { clampZoom, materializeAddedTexts } from '@/pdf/added-text.mjs';
+import { clampZoom, materializeAddedTexts, textEditConsentKey } from '@/pdf/added-text.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
@@ -196,7 +196,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const [fontColor, setFontColor] = useState('#111827');
   const [splitFrom, setSplitFrom] = useState(1);
   const [splitTo, setSplitTo] = useState(1);
-  const [visualEditAcknowledged, setVisualEditAcknowledged] = useState(false);
+  const [visualEditConsent, setVisualEditConsent] = useState<string | null>(null);
   const [hasVisualEdits, setHasVisualEdits] = useState(false);
   const [zoomMode, setZoomMode] = useState<'fit' | 'custom'>('fit');
   const [zoomPercent, setZoomPercent] = useState(100);
@@ -204,6 +204,9 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const [displayViewport, setDisplayViewport] = useState<PageViewport | null>(null);
 
   const selectedTextBox = textBoxes.find((box) => box.id === selectedTextId) || null;
+  const consentKey = textEditConsentKey(documentVersion, currentPage, selectedTextId || '',
+    standardFontFor(fontFamily), editText, fontSize);
+  const visualEditAcknowledged = Boolean(selectedTextBox && visualEditConsent === consentKey);
   const selectedAddedText = addedTexts.find((object) => object.id === selectedAddedTextId) || null;
   const visibleAddedTexts = addedTexts.filter((object) => object.page === currentPage).map((object) => {
     const viewport = displayViewport;
@@ -382,7 +385,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       if (nextName) {
         setFileName(nextName);
         setHasVisualEdits(false);
-        setVisualEditAcknowledged(false);
+        setVisualEditConsent(null);
         setAddedTexts([]);
         setSelectedAddedTextId(null);
         setZoomMode('fit');
@@ -411,7 +414,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     } finally {
       if (loadGeneration === loadGenerationRef.current) setBusy(false);
     }
-  }, [errorMessage, loadingTaskRef, loadGenerationRef, pdfDocumentRef, renderGenerationRef, renderTaskRef, renderThumbnails, setAddedTexts, setBytes, setCurrentPage, setDisplayViewport, setDocumentVersion, setDraft, setFileName, setHasVisualEdits, setPageCount, setSelectedAddedTextId, setSelectedTextId, setSplitFrom, setSplitTo, setStatus, setTextBoxes, setVisualEditAcknowledged, setZoomMode, setZoomPercent, t, thumbnailGenerationRef]);
+  }, [errorMessage, loadingTaskRef, loadGenerationRef, pdfDocumentRef, renderGenerationRef, renderTaskRef, renderThumbnails, setAddedTexts, setBytes, setCurrentPage, setDisplayViewport, setDocumentVersion, setDraft, setFileName, setHasVisualEdits, setPageCount, setSelectedAddedTextId, setSelectedTextId, setSplitFrom, setSplitTo, setStatus, setTextBoxes, setVisualEditConsent, setZoomMode, setZoomPercent, t, thumbnailGenerationRef]);
 
   const acceptFile = useCallback(async (file?: File) => {
     if (!file) return;
@@ -1014,7 +1017,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
                 <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
                 <button type="button" disabled={!draft.text.trim()} onClick={commitText} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
               </>}
-              {!draft && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditAcknowledged(event.target.checked)} className="mt-1.5" />{t("Ho capito: il testo coperto resta recuperabile.")}</label>}
+              {!draft && selectedTextBox && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditConsent(event.target.checked ? consentKey : null)} className="mt-1.5" />{message('fontConsent', { font: standardFontFor(fontFamily) })}</label>}
               {!draft && selectedTextBox && <>
                 <label className="block text-xs font-semibold text-slate-400">{t("Nuovo testo visibile")} <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50" />
                 </label>
