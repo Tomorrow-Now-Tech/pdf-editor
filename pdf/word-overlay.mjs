@@ -35,7 +35,28 @@ export function observedFontGlyphs(operators, fontId, ops) {
       }
     }
   });
+  if (stack.length) fail();
   return observed;
+}
+
+/** Conservative text-only mode: no guessed intersection of paths/XObjects.
+ * Unsupported graphics/forms fail closed, rather than whitening their pixels.
+ */
+export function assertTextOnlyPage(operators, ops) {
+  const forbidden = new Set(Object.entries(ops).filter(([key]) =>
+    /constructPath|paint.*Image|paintForm|shadingFill|setGState|setTextRenderingMode/.test(key)).map(([,value])=>value));
+  if (operators.fnArray.some(op=>forbidden.has(op))) fail();
+}
+
+/** Pending session objects are not present in the original rendering. */
+export function assertNoPendingText(bounds, pageNumber, objects) {
+  const boxes=objects.filter(object=>object.page===pageNumber && object.text.trim()).map(object=>{
+    const lines=object.text.split('\n'),size=object.fontSize;
+    return { id:object.id,pdfRectX:object.pdfX-size*.2,pdfRectY:object.pdfY-size*.4-(lines.length-1)*Math.max(24,size*1.4),
+      pdfWidth:(Math.max(...lines.map(line=>line.length))+1)*size*1.2,
+      pdfHeight:size*1.4+(lines.length-1)*Math.max(24,size*1.4) };
+  });
+  assertNoTextOverlap(bounds,{id:'native-selection'},boxes);
 }
 
 function unicodeMap(font) {
@@ -100,6 +121,9 @@ export function planWordOverlay(pdf, pageIndex, item, newText, observed) {
   const [a,b,c,d,x,y] = item.transform || [];
   if (![a,b,c,d,x,y].every(Number.isFinite) || a <= 0 || d <= 0 || a > 200 || d > 200 || Math.abs(b/a) > .02 || Math.abs(c) > .001) fail();
   if (pdf.catalog.has(PDFName.of('OCProperties'))) fail();
+  // Nested resources can carry a different subset with the same face name.
+  // Text-only mode does not attempt to interpret Form XObjects or annotations.
+  if (page.node.normalizedEntries().XObject.entries().length || page.node.Annots()?.size()) fail();
   const fonts = page.node.normalizedEntries().Font;
   const matches = fonts.entries().filter(([,ref]) => {
     const font = pdf.context.lookup(ref);
@@ -142,7 +166,7 @@ export function planWordOverlay(pdf, pageIndex, item, newText, observed) {
       (Math.ceil(bounds[2]*2)+2)*(Math.ceil(bounds[3]*2)+2) > 500_000) fail();
   const encoded = replacement.map(code => code.toString(16).padStart(4,'0')).join('');
   // Encoded CIDs, a restricted existing resource name and validated numbers only.
-  const program = `q BT ${resource} 1 Tf 0 g ${a*scale} ${b*scale} ${c} ${d} ${wordX} ${wordY} Tm <${encoded}> Tj ET Q\n`;
+  const program = `q BT 0 Tc 0 Tw 100 Tz 0 Ts 0 Tr ${resource} 1 Tf 0 g ${a*scale} ${b*scale} ${c} ${d} ${wordX} ${wordY} Tm <${encoded}> Tj ET Q\n`;
   return { bounds, program, fontName: item.sourceFontName, word: changed.word };
 }
 
@@ -176,5 +200,6 @@ export function applyWordOverlay(pdf, pageIndex, plan) {
   const [x,y,width,height] = plan.bounds;
   const stream = `q 1 g ${x} ${y} ${width} ${height} re f Q\n${plan.program}`;
   const page = pdf.getPage(pageIndex);
+  page.node.wrapContentStreams(pdf.context.getPushGraphicsStateContentStream(), pdf.context.getPopGraphicsStateContentStream());
   page.node.addContentStream(pdf.context.register(pdf.context.flateStream(stream)));
 }

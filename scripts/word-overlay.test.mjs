@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { PDFDocument, PDFName, PDFDict } from 'pdf-lib';
 import { getDocument, OPS } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { pdfDocumentOptions } from '../pdf/runtime.mjs';
-import { changedWord, observedFontGlyphs, planWordOverlay, assertWordArea, assertNoTextOverlap, applyWordOverlay } from '../pdf/word-overlay.mjs';
+import { changedWord, observedFontGlyphs, assertTextOnlyPage, assertNoPendingText, planWordOverlay, assertWordArea, assertNoTextOverlap, applyWordOverlay } from '../pdf/word-overlay.mjs';
 
 const { createCanvas } = createRequire(import.meta.url)('@napi-rs/canvas');
 const options = bytes => ({ ...pdfDocumentOptions(bytes, `${import.meta.dirname}/../public/pdfjs/`), useWorkerFetch: false });
@@ -96,4 +96,46 @@ test('compressed CMap expansion and oversized word areas are bounded before allo
     font.set(PDFName.of('ToUnicode'),f.pdf.context.register(f.pdf.context.flateStream('X'.repeat(1_000_000))));
     assert.throws(()=>planWordOverlay(f.pdf,0,f.item,'Torino Milano strada',f.observed));
   } finally { await f.task.destroy(); }
+});
+
+test('residual CTM, clipping and text state cannot displace or hide the new word',async()=>{
+  for(const tail of ['2 0 0 2 40 0 cm','0 0 1 1 re W n','BT 3 Tr -4 Tc 2 Tw 50 Tz 30 Ts ET']) {
+    const f=await fixture();let task;
+    try {
+      const plan=planWordOverlay(f.pdf,0,f.item,'Torino Milano strada',f.observed);
+      const page=f.pdf.getPage(0);
+      page.node.addContentStream(f.pdf.context.register(f.pdf.context.flateStream(tail)));
+      applyWordOverlay(f.pdf,0,plan);
+      task=getDocument(options(await f.pdf.save()));
+      const rendered=await(await task.promise).getPage(1),canvas=createCanvas(800,480);
+      await rendered.render({canvas,canvasContext:canvas.getContext('2d'),viewport:rendered.getViewport({scale:2})}).promise;
+      const word=(await rendered.getTextContent()).items.find(item=>item.str==='Milano');
+      assert.ok(word,tail);
+      assert.ok(Math.abs(word.transform[4]-(plan.bounds[0]+1.5))<.01,tail);
+      assert.ok(Math.abs(word.transform[5]-140)<.01,tail);
+      const pixels=canvas.getContext('2d').getImageData(Math.floor(word.transform[4]*2),Math.floor((240-140-12)*2),60,24).data;
+      assert.ok(pixels.some((value,index)=>index%4===0&&value<25),'The replacement must be visible');
+    } finally {await f.task.destroy();if(task)await task.destroy();}
+  }
+});
+
+test('graphics, images and XObject fonts are conservatively rejected in faithful mode',async()=>{
+  for(const op of [OPS.constructPath,OPS.paintImageXObject,OPS.paintFormXObjectBegin,OPS.setGState,OPS.setTextRenderingMode])
+    assert.throws(()=>assertTextOnlyPage({fnArray:[op]},OPS));
+  assert.doesNotThrow(()=>assertTextOnlyPage({fnArray:[OPS.showText]},OPS));
+  const f=await fixture();
+  try {
+    const page=f.pdf.getPage(0);
+    const image=f.pdf.context.stream(new Uint8Array([0]),{Type:'XObject',Subtype:'Image',Width:1,Height:1,ColorSpace:'DeviceGray',BitsPerComponent:8});
+    page.node.normalizedEntries().XObject.set(PDFName.of('Image'),f.pdf.context.register(image));
+    assert.throws(()=>planWordOverlay(f.pdf,0,f.item,'Torino Milano strada',f.observed));
+  }finally{await f.task.destroy();}
+});
+
+test('pending added text is protected on the affected page, including multiple lines',()=>{
+  const bounds=[20,20,40,18],object={id:'pending',page:1,pdfX:22,pdfY:30,fontSize:12,text:'NOTE'};
+  assert.throws(()=>assertNoPendingText(bounds,1,[object]));
+  assert.doesNotThrow(()=>assertNoPendingText(bounds,2,[object]));
+  assert.doesNotThrow(()=>assertNoPendingText(bounds,1,[{...object,pdfX:300}]));
+  assert.throws(()=>assertNoPendingText(bounds,1,[{...object,pdfY:60,text:'FIRST\nSECOND'}]));
 });

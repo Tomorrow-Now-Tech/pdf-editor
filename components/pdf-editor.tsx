@@ -31,7 +31,7 @@ import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
 import { clampZoom, focusConnectedDraft, materializeAddedTexts, textEditConsentKey } from '@/pdf/added-text.mjs';
-import { planWordOverlay, observedFontGlyphs, assertNoTextOverlap, assertWordArea, applyWordOverlay } from '@/pdf/word-overlay.mjs';
+import { planWordOverlay, observedFontGlyphs, assertTextOnlyPage, assertNoPendingText, assertNoTextOverlap, assertWordArea, applyWordOverlay } from '@/pdf/word-overlay.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
@@ -630,8 +630,11 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         const originalPage = await pdfDocumentRef.current?.getPage(currentPage);
         if (!originalPage) throw new Error(t('Font o impaginazione non verificabili nel browser. Nessuna modifica applicata.'));
         const pdfjs = await importPdfJs();
-        const observed = observedFontGlyphs(await originalPage.getOperatorList(), selectedTextBox.sourceFontId, pdfjs.OPS);
+        const operators = await originalPage.getOperatorList();
+        assertTextOnlyPage(operators,pdfjs.OPS);
+        const observed = observedFontGlyphs(operators, selectedTextBox.sourceFontId, pdfjs.OPS);
         const plan = planWordOverlay(pdf, currentPage - 1, selectedTextBox, editText, observed);
+        assertNoPendingText(plan.bounds,currentPage,addedTexts);
         const [x,y,w,h] = plan.bounds;
         const viewport = originalPage.getViewport({ scale: 2 });
         const [viewportX,viewportY] = viewport.convertToViewportPoint(x,y+h);
@@ -651,6 +654,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       }
       const font = await pdf.embedFont(standardFontFor(fontFamily));
       const color = hexToRgb(fontColor);
+      assertNoPendingText([selectedTextBox.pdfRectX-1, selectedTextBox.pdfRectY-1, selectedTextBox.pdfWidth+2, selectedTextBox.pdfHeight+2],currentPage,addedTexts);
       assertNoTextOverlap([selectedTextBox.pdfRectX-1, selectedTextBox.pdfRectY-1, selectedTextBox.pdfWidth+2, selectedTextBox.pdfHeight+2], selectedTextBox, textBoxes);
       page.drawRectangle({
         x: selectedTextBox.pdfRectX - 1,
@@ -1056,7 +1060,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
               {!draft && selectedTextBox && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditConsent(event.target.checked ? consentKey : null)} className="mt-1.5" />{keepOriginalFont ? t('Ho capito: il testo coperto resta recuperabile.') : message('fontConsent', { font: standardFontFor(fontFamily) })}</label>}
               {!draft && selectedTextBox && <>
                 <label className="flex items-start gap-2 text-sm text-cyan-100"><input type="checkbox" checked={keepOriginalFont} onChange={(event) => { setKeepOriginalFont(event.target.checked); setVisualEditConsent(null); }} />{t('Mantieni il font originale: cambia una sola parola')}</label>
-                {keepOriginalFont && <InfoBox>{t('Solo font incorporati verificabili, testo nero su bianco e righe separate. Se la verifica fallisce, il PDF resta intatto. Il testo originale resta recuperabile: non è redazione sicura.')}</InfoBox>}
+                {keepOriginalFont && <InfoBox>{t('Solo pagine di testo nero su bianco, con font incorporati verificabili e righe separate: niente immagini, elementi grafici o moduli. Se la verifica fallisce, il PDF resta intatto. L’originale resta recuperabile: non è redazione sicura.')}</InfoBox>}
                 <label className="block text-xs font-semibold text-slate-400">{t("Nuovo testo visibile")} <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50" />
                 </label>
                 <p className="rounded-lg bg-white/[.035] px-3 py-2 text-[11px] leading-5 text-slate-500">{t("Rilevato:")} {selectedTextBox.fontName} · {selectedTextBox.fontSize.toFixed(1)} pt</p>
