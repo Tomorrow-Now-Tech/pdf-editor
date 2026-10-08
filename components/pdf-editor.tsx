@@ -31,6 +31,7 @@ import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 import { assertRenderedImages, pdfDocumentOptions, rasterizeChecked } from '@/pdf/runtime.mjs';
 import { clampZoom, focusConnectedDraft, materializeAddedTexts, textEditConsentKey } from '@/pdf/added-text.mjs';
+import { planWordOverlay, observedFontGlyphs, assertNoTextOverlap, assertWordArea, applyWordOverlay } from '@/pdf/word-overlay.mjs';
 import { WEB_SOURCE_URL } from '@/legal/source';
 import { MAC_DMG_DOWNLOAD_URL, MAC_DMG_FILENAME, MAC_DMG_DESCRIPTION } from '@/downloads/mac.mjs';
 
@@ -82,6 +83,11 @@ type ExistingTextBox = {
   fontFamily: FontFamily;
   fontName: string;
   fontSize: number;
+  sourceFontName: string;
+  sourceFontId: string;
+  transform: number[];
+  ascent: number;
+  descent: number;
 };
 
 type PdfTextItem = {
@@ -194,6 +200,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
   const [splitFrom, setSplitFrom] = useState(1);
   const [splitTo, setSplitTo] = useState(1);
   const [visualEditConsent, setVisualEditConsent] = useState<string | null>(null);
+  const [keepOriginalFont, setKeepOriginalFont] = useState(true);
   const [hasVisualEdits, setHasVisualEdits] = useState(false);
   const [zoomMode, setZoomMode] = useState<'fit' | 'custom'>('fit');
   const [zoomPercent, setZoomPercent] = useState(100);
@@ -202,7 +209,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
 
   const selectedTextBox = textBoxes.find((box) => box.id === selectedTextId) || null;
   const consentKey = textEditConsentKey(documentVersion, currentPage, selectedTextId || '',
-    standardFontFor(fontFamily), editText, fontSize);
+    keepOriginalFont ? 'original' : standardFontFor(fontFamily), editText, fontSize);
   const visualEditAcknowledged = Boolean(selectedTextBox && visualEditConsent === consentKey);
   const selectedAddedText = addedTexts.find((object) => object.id === selectedAddedTextId) || null;
   const visibleAddedTexts = addedTexts.filter((object) => object.page === currentPage).map((object) => {
@@ -297,6 +304,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         const transformed = pdfjs.Util.transform(viewport.transform, item.transform);
         const screenHeight = Math.max(6, Math.hypot(transformed[2], transformed[3]) || item.height * viewport.scale);
         const style = content.styles[item.fontName] as { fontFamily?: string; ascent?: number; descent?: number } | undefined;
+        const originalFont = page.commonObjs.has(item.fontName) ? page.commonObjs.get(item.fontName) as { name?: string } : null;
         const ascent = style?.ascent
           ? style.ascent * screenHeight
           : style?.descent
@@ -323,6 +331,11 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
           fontFamily: mapFontFamily(item.fontName, style?.fontFamily),
           fontName: style?.fontFamily || item.fontName || t("Carattere PDF"),
           fontSize: Math.max(6, Math.hypot(item.transform[2], item.transform[3]) || item.height || 12),
+          sourceFontName: originalFont?.name || '',
+          sourceFontId: item.fontName,
+          transform: item.transform,
+          ascent: style?.ascent ?? 0,
+          descent: style?.descent ?? 0,
         } satisfies ExistingTextBox;
       });
       setTextBoxes(boxes);
@@ -601,6 +614,8 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     setDraft(null);
     setSelectedAddedTextId(null);
     setSelectedTextId(box.id);
+    setKeepOriginalFont(true);
+    setVisualEditConsent(null);
     setEditText(box.text);
     setFontFamily(box.fontFamily);
     setFontSize(Math.round(box.fontSize * 10) / 10);
@@ -611,8 +626,32 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
     if (!selectedTextBox || !visualEditAcknowledged) return;
     const saved = await mutatePdf(async (pdf) => {
       const page = pdf.getPage(currentPage - 1);
+      if (keepOriginalFont) {
+        const originalPage = await pdfDocumentRef.current?.getPage(currentPage);
+        if (!originalPage) throw new Error(t('Font o impaginazione non verificabili nel browser. Nessuna modifica applicata.'));
+        const pdfjs = await importPdfJs();
+        const observed = observedFontGlyphs(await originalPage.getOperatorList(), selectedTextBox.sourceFontId, pdfjs.OPS);
+        const plan = planWordOverlay(pdf, currentPage - 1, selectedTextBox, editText, observed);
+        const [x,y,w,h] = plan.bounds;
+        const viewport = originalPage.getViewport({ scale: 2 });
+        const [viewportX,viewportY] = viewport.convertToViewportPoint(x,y+h);
+        const left = Math.floor(viewportX), top = Math.floor(viewportY);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(w*2)+2; canvas.height = Math.ceil(h*2)+2;
+        if (canvas.width*canvas.height > 500_000) throw new Error(t('Font o impaginazione non verificabili nel browser. Nessuna modifica applicata.'));
+        try {
+          const context = canvas.getContext('2d', { alpha: false });
+          if (!context) throw new Error(t('Canvas non disponibile.'));
+          await originalPage.render({ canvas, canvasContext: context, viewport, transform: [1,0,0,1,-left,-top] }).promise;
+          await assertRenderedImages(originalPage);
+          assertWordArea(plan, selectedTextBox, textBoxes, context.getImageData(0,0,canvas.width,canvas.height).data, canvas.width, canvas.height);
+          applyWordOverlay(pdf, currentPage - 1, plan);
+        } finally { canvas.width = canvas.height = 0; }
+        return;
+      }
       const font = await pdf.embedFont(standardFontFor(fontFamily));
       const color = hexToRgb(fontColor);
+      assertNoTextOverlap([selectedTextBox.pdfRectX-1, selectedTextBox.pdfRectY-1, selectedTextBox.pdfWidth+2, selectedTextBox.pdfHeight+2], selectedTextBox, textBoxes);
       page.drawRectangle({
         x: selectedTextBox.pdfRectX - 1,
         y: selectedTextBox.pdfRectY - 1,
@@ -1008,18 +1047,20 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
               <InfoBox>{draft
                 ? t("Scrivi direttamente nel riquadro: il testo viene applicato quando clicchi fuori.")
                 : selectedTextBox
-                  ? t("Copri e riscrivi il testo con uno dei tre font disponibili. Il testo originale non viene rimosso e il font esatto non è garantito.")
+                  ? t('Mantieni il font originale per una parola, quando verificabile, oppure scegli esplicitamente un font sostitutivo. Il testo originale resta recuperabile.')
                   : t("Clicca un testo esistente per modificarlo oppure uno spazio vuoto per scrivere subito.")}</InfoBox>
               {draft && <>
                 <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
                 <button type="button" disabled={!draft.text.trim()} onClick={commitText} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">{t("Applica testo")}</button>
               </>}
-              {!draft && selectedTextBox && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditConsent(event.target.checked ? consentKey : null)} className="mt-1.5" />{message('fontConsent', { font: standardFontFor(fontFamily) })}</label>}
+              {!draft && selectedTextBox && <label className="flex items-start gap-2 text-sm leading-6 text-amber-100"><input type="checkbox" checked={visualEditAcknowledged} onChange={(event) => setVisualEditConsent(event.target.checked ? consentKey : null)} className="mt-1.5" />{keepOriginalFont ? t('Ho capito: il testo coperto resta recuperabile.') : message('fontConsent', { font: standardFontFor(fontFamily) })}</label>}
               {!draft && selectedTextBox && <>
+                <label className="flex items-start gap-2 text-sm text-cyan-100"><input type="checkbox" checked={keepOriginalFont} onChange={(event) => { setKeepOriginalFont(event.target.checked); setVisualEditConsent(null); }} />{t('Mantieni il font originale: cambia una sola parola')}</label>
+                {keepOriginalFont && <InfoBox>{t('Solo font incorporati verificabili, testo nero su bianco e righe separate. Se la verifica fallisce, il PDF resta intatto. Il testo originale resta recuperabile: non è redazione sicura.')}</InfoBox>}
                 <label className="block text-xs font-semibold text-slate-400">{t("Nuovo testo visibile")} <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50" />
                 </label>
                 <p className="rounded-lg bg-white/[.035] px-3 py-2 text-[11px] leading-5 text-slate-500">{t("Rilevato:")} {selectedTextBox.fontName} · {selectedTextBox.fontSize.toFixed(1)} pt</p>
-                <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />
+                {!keepOriginalFont && <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />}
                 <button type="button" disabled={!visualEditAcknowledged} onClick={() => void commitExistingText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:opacity-40"><Check className="mr-2 inline size-4" />{t("Applica modifica visiva")}</button>
               </>}
             </div>
