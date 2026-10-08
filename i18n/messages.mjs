@@ -63,7 +63,7 @@ export const EN = {
   'Aumenta zoom': 'Zoom in',
   'Adatta pagina': 'Fit page',
   'Non è una cancellazione sicura.': 'This is not secure redaction.',
-  'Il testo originale viene coperto in bianco, ma rimane nel PDF ed è recuperabile con copia, ricerca o estrazione. Non usare questa funzione per oscurare dati personali o riservati. Il font è sostitutivo e lo sfondo potrebbe essere coperto.': 'The original text is covered with a white rectangle but remains in the PDF. It can still be copied, searched or extracted. Do not use this tool to hide personal or confidential information. A substitute font is used, and the background may also be covered.',
+  'Il testo originale viene coperto in bianco, ma rimane nel PDF ed è recuperabile con copia, ricerca o estrazione. Non usare questa funzione per oscurare dati personali o riservati. Il font originale viene riutilizzato solo quando verificabile; il font sostitutivo richiede una scelta esplicita e lo sfondo potrebbe essere coperto.': 'The original text is covered with a white rectangle but remains in the PDF. It can still be copied, searched or extracted. Do not use this tool to hide personal or confidential information. The original font is reused only when it can be verified; using a substitute requires your explicit choice and may also cover the background.',
   'Questo avviso vale anche per il PDF scaricato. La conversione Word è bloccata per evitare l’esportazione del testo coperto.': 'This also applies to the downloaded PDF. Word export is disabled to prevent the covered text from being exported.',
   'Pagine': 'Pages',
   'Trascina per spostare': 'Drag to move',

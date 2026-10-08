@@ -952,7 +952,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
 
       {error && <div role="alert" className="border-b border-red-300/15 bg-red-400/8 px-4 py-2 text-sm text-red-200">{error}</div>}
       {(tool === 'edit' || hasVisualEdits) && <div role="note" className="border-b border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
-        <strong>{t("Non è una cancellazione sicura.")}</strong> {t("Il testo originale viene coperto in bianco, ma rimane nel PDF ed è recuperabile con copia, ricerca o estrazione. Non usare questa funzione per oscurare dati personali o riservati. Il font è sostitutivo e lo sfondo potrebbe essere coperto.")} {hasVisualEdits && <span className="block">{t("Questo avviso vale anche per il PDF scaricato. La conversione Word è bloccata per evitare l’esportazione del testo coperto.")}</span>}
+        <strong>{t("Non è una cancellazione sicura.")}</strong> {t("Il testo originale viene coperto in bianco, ma rimane nel PDF ed è recuperabile con copia, ricerca o estrazione. Non usare questa funzione per oscurare dati personali o riservati. Il font originale viene riutilizzato solo quando verificabile; il font sostitutivo richiede una scelta esplicita e lo sfondo potrebbe essere coperto.")} {hasVisualEdits && <span className="block">{t("Questo avviso vale anche per il PDF scaricato. La conversione Word è bloccata per evitare l’esportazione del testo coperto.")}</span>}
       </div>}
 
       <div className="editor-workspace grid lg:grid-cols-[190px_minmax(0,1fr)_270px]">
@@ -1063,7 +1063,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
                 {keepOriginalFont && <InfoBox>{t('Solo pagine di testo nero su bianco, con font incorporati verificabili e righe separate: niente immagini, elementi grafici o moduli. Se la verifica fallisce, il PDF resta intatto. L’originale resta recuperabile: non è redazione sicura.')}</InfoBox>}
                 <label className="block text-xs font-semibold text-slate-400">{t("Nuovo testo visibile")} <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-[#141a28] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50" />
                 </label>
-                <p className="rounded-lg bg-white/[.035] px-3 py-2 text-[11px] leading-5 text-slate-500">{t("Rilevato:")} {selectedTextBox.fontName} · {selectedTextBox.fontSize.toFixed(1)} pt</p>
+                <p className="rounded-lg bg-white/[.035] px-3 py-2 text-[11px] leading-5 text-slate-500">{t("Rilevato:")} {selectedTextBox.sourceFontName || selectedTextBox.fontName} · {selectedTextBox.fontSize.toFixed(1)} pt</p>
                 {!keepOriginalFont && <TextStyleControls locale={locale} fontFamily={fontFamily} setFontFamily={setFontFamily} fontSize={fontSize} setFontSize={setFontSize} fontColor={fontColor} setFontColor={setFontColor} />}
                 <button type="button" disabled={!visualEditAcknowledged} onClick={() => void commitExistingText()} className="brand-button h-10 w-full rounded-lg text-sm font-bold text-white disabled:opacity-40"><Check className="mr-2 inline size-4" />{t("Applica modifica visiva")}</button>
               </>}

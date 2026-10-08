@@ -169,7 +169,7 @@ export const TOOLS = {
       'Aggiungi testo o copri e riscrivi le scritte nel PDF, senza upload. Modifica visiva: il testo originale rimane recuperabile. Non è redazione sicura.',
     heading: 'Modifica il testo di un PDF, in modo visivo.',
     intro:
-      'Aggiungi una nota o copri e riscrivi una scritta con un font sostitutivo. La modifica è visiva: il testo originale resta recuperabile, anche nel file scaricato.',
+      'Aggiungi una nota o correggi una parola mantenendo il font originale quando verificabile. Puoi scegliere esplicitamente un font sostitutivo. La modifica è visiva: il testo originale resta recuperabile, anche nel file scaricato.',
     uploadHint:
       'Apri il PDF per selezionare una scritta. Per inserire una nuova nota usa invece “Aggiungi testo”.',
     steps: [
@@ -179,7 +179,7 @@ export const TOOLS = {
       },
       {
         title: 'Scrivi e controlla lo stile',
-        text: 'Inserisci il testo, scegli carattere, dimensione e colore, leggi l’avviso sulla modifica visiva e applica. Per una nuova nota scegli “Aggiungi testo” e clicca sulla pagina.',
+        text: 'Per una sola parola lascia attivo “Mantieni il font originale”. Se il controllo non riesce, nessuna modifica viene applicata: puoi annullare o scegliere esplicitamente un font sostitutivo, dimensione e colore. Leggi l’avviso e controlla l’anteprima. Per una nuova nota usa “Aggiungi testo”.',
       },
       {
         title: 'Scarica una nuova copia',
@@ -189,7 +189,7 @@ export const TOOLS = {
     detailTitle: 'Aggiungere testo non significa cancellare l’originale',
     detail: [
       'La versione browser sovrappone un riquadro e il nuovo testo alle scritte esistenti. Può essere utile per bozze, annotazioni e correzioni visive non riservate, ma non modifica il contenuto originale come un motore di editing nativo.',
-      'Sono disponibili font sostitutivi Helvetica, Times e Courier, con dimensione e colore regolabili. Il browser non garantisce lo stesso carattere incorporato nel PDF. Per funzioni avanzate sui font, firme, immagini e OCR è disponibile l’app Mac.',
+      'Il riuso del font incorporato è limitato alla sostituzione di una parola su pagine di solo testo nero e sfondo bianco, senza immagini, grafica, annotazioni o rotazione. I caratteri necessari devono essere verificabili nel PDF e la parola deve entrare nello spazio disponibile; può essere leggermente compressa in orizzontale, senza spostare le altre scritte. Se un controllo fallisce, il documento resta invariato. Helvetica, Times e Courier restano disponibili solo scegliendo la modalità sostitutiva. Per strumenti più avanzati è disponibile l’app Mac.',
     ],
     warning:
       'Non usare “Modifica visiva” per oscurare dati personali o informazioni riservate: il testo originale rimane recuperabile con copia, ricerca o estrazione. Serve uno strumento di redazione sicura per rimuoverlo davvero.',
@@ -202,7 +202,7 @@ export const TOOLS = {
       {
         question: 'Posso usare lo stesso font del documento?',
         answer:
-          'La versione web usa Helvetica, Times o Courier come sostituti. Puoi regolare dimensione e colore, ma il risultato non è garantito identico al font originale.',
+          'Sì, per una sola parola nelle pagine di solo testo compatibili: lascia attiva l’opzione “Mantieni il font originale”. Non è una garanzia per tutti i PDF. Se font, caratteri, geometria o sfondo non sono verificabili, la modifica si ferma senza cambiare il documento. La modalità con font sostitutivo va scelta esplicitamente.',
       },
       {
         question: 'Posso scrivere su un PDF scannerizzato?',
