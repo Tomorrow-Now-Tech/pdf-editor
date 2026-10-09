@@ -33,8 +33,9 @@ test('Mac download links target the installer and keep source links separate', a
     assert.ok(source.includes(sourceLink), 'The source link must remain available');
     assert.ok(!source.includes('/releases/latest'), 'Download must not open a release page');
   }
-  assert.equal(MAC_APP_VERSION, '1.7.4');
-  assert.equal(MAC_APP_SOURCE_URL, 'https://github.com/Trader855/PDF/tree/v1.7.4');
+  assert.equal(MAC_APP_VERSION, '1.7.5');
+  assert.equal(MAC_APP_SOURCE_URL, 'https://github.com/Trader855/PDF/tree/v1.7.5');
+  assert.equal(MAC_DMG_SHA256, 'bb3cef7106016fdad4be4444c340ba1c5feafeede7eab2f883cc8f9807d5c3bf');
   assert.match(MAC_DMG_SHA256, /^[a-f0-9]{64}$/);
 });
 
