@@ -114,9 +114,9 @@ export async function assertSeo(get) {
       );
     }
     if (path === '/editor-pdf-mac' || path === '/en/pdf-editor-for-mac') {
-      assert.ok(html.includes('1.7.4'), `Mac version missing: ${path}`);
-      assert.ok(html.includes('Mac-PDF-Editor-1.7.4-arm64.dmg'), `Direct Mac download missing: ${path}`);
-      assert.ok(html.includes('454d403339393948cc9af06f89180e676a897f5ddfbe92ba1832716c1d997921'), `Mac checksum missing: ${path}`);
+      assert.ok(html.includes('1.7.5'), `Mac version missing: ${path}`);
+      assert.ok(html.includes('Mac-PDF-Editor-1.7.5-arm64.dmg'), `Direct Mac download missing: ${path}`);
+      assert.ok(html.includes('bb3cef7106016fdad4be4444c340ba1c5feafeede7eab2f883cc8f9807d5c3bf'), `Mac checksum missing: ${path}`);
       assert.ok(html.includes('Apple Silicon'), `Mac compatibility missing: ${path}`);
       assert.ok(html.includes('100 MB') && (html.includes('1.000') || html.includes('1,000')), `Mac limits missing: ${path}`);
     }
