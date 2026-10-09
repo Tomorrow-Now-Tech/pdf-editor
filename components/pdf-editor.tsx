@@ -634,7 +634,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
         assertTextOnlyPage(operators,pdfjs.OPS);
         const observed = observedFontGlyphs(operators, selectedTextBox.sourceFontId, pdfjs.OPS);
         const plan = planWordOverlay(pdf, currentPage - 1, selectedTextBox, editText, observed);
-        assertNoPendingText(plan.bounds,currentPage,addedTexts);
+        assertNoPendingText(plan.bounds,currentPage,addedTexts,page.getRotation().angle);
         const [x,y,w,h] = plan.bounds;
         const viewport = originalPage.getViewport({ scale: 2 });
         const [viewportX,viewportY] = viewport.convertToViewportPoint(x,y+h);
@@ -654,7 +654,7 @@ export function PdfEditor({ initialTool = 'select', uploadHint, locale = 'it' }:
       }
       const font = await pdf.embedFont(standardFontFor(fontFamily));
       const color = hexToRgb(fontColor);
-      assertNoPendingText([selectedTextBox.pdfRectX-1, selectedTextBox.pdfRectY-1, selectedTextBox.pdfWidth+2, selectedTextBox.pdfHeight+2],currentPage,addedTexts);
+      assertNoPendingText([selectedTextBox.pdfRectX-1, selectedTextBox.pdfRectY-1, selectedTextBox.pdfWidth+2, selectedTextBox.pdfHeight+2],currentPage,addedTexts,page.getRotation().angle);
       assertNoTextOverlap([selectedTextBox.pdfRectX-1, selectedTextBox.pdfRectY-1, selectedTextBox.pdfWidth+2, selectedTextBox.pdfHeight+2], selectedTextBox, textBoxes);
       page.drawRectangle({
         x: selectedTextBox.pdfRectX - 1,

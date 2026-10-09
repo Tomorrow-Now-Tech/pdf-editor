@@ -139,3 +139,38 @@ test('pending added text is protected on the affected page, including multiple l
   assert.doesNotThrow(()=>assertNoPendingText(bounds,1,[{...object,pdfX:300}]));
   assert.throws(()=>assertNoPendingText(bounds,1,[{...object,pdfY:60,text:'FIRST\nSECOND'}]));
 });
+
+test('excess restore operators cannot escape the word overlay graphics scope',async()=>{
+  assert.throws(()=>observedFontGlyphs({fnArray:[OPS.restore],argsArray:[[]]},'font',OPS));
+  assert.doesNotThrow(()=>observedFontGlyphs({fnArray:[OPS.save,OPS.restore],argsArray:[[],[]]},'font',OPS));
+  const f=await fixture();let task;
+  try {
+    const page=f.pdf.getPage(0);
+    page.node.addContentStream(f.pdf.context.register(f.pdf.context.flateStream('Q Q 2 0 0 2 40 0 cm')));
+    const original=await f.pdf.save();
+    task=getDocument(options(original));
+    const loaded=await(await task.promise).getPage(1),operators=await loaded.getOperatorList();
+    assert.throws(()=>observedFontGlyphs(operators,f.item.sourceFontId,OPS));
+    assert.deepEqual(await f.pdf.save(),original,'Rejection must leave the PDF unchanged');
+  }finally{await f.task.destroy();if(task)await task.destroy();}
+});
+
+test('rotated pages with pending notes fail closed in both replacement branches',async()=>{
+  const source=await readFile(new URL('../components/pdf-editor.tsx',import.meta.url),'utf8');
+  assert.equal((source.match(/assertNoPendingText\([^;]*addedTexts,page\.getRotation\(\)\.angle\)/g)||[]).length,2);
+  const bounds=[20,20,40,18],object={id:'note',page:1,pdfX:300,pdfY:90,fontSize:12,text:'MY NOTE\nSECOND LINE'};
+  const untouched=structuredClone(object);
+  for(const angle of [90,180,270]) {
+    const f=await fixture();
+    try {
+      f.pdf.getPage(0).setRotation({type:'degrees',angle});
+      const before=await f.pdf.save();
+      assert.throws(()=>assertNoPendingText(bounds,1,[object],angle));
+      assert.deepEqual(object,untouched);
+      assert.deepEqual(await f.pdf.save(),before);
+      assert.doesNotThrow(()=>assertNoPendingText(bounds,2,[object],angle));
+      assert.doesNotThrow(()=>assertNoPendingText(bounds,1,[],angle));
+    }finally{await f.task.destroy();}
+  }
+  assert.doesNotThrow(()=>assertNoPendingText(bounds,1,[object],0));
+});

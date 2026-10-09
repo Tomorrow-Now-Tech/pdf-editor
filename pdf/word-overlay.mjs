@@ -24,7 +24,10 @@ export function observedFontGlyphs(operators, fontId, ops) {
   operators.fnArray.forEach((op, i) => {
     const args = operators.argsArray[i];
     if (op === ops.save) stack.push(active);
-    else if (op === ops.restore) active = stack.pop() ?? null;
+    else if (op === ops.restore) {
+      if (!stack.length) fail(); // An excess Q can escape the enclosing q/Q.
+      active = stack.pop() ?? null;
+    }
     else if (op === ops.setFont) active = args[0];
     else if (op === ops.showText && active === fontId) {
       for (const glyph of args[0]) if (glyph && (glyph.isInFont || /^[ \u00a0]$/.test(glyph.unicode) && glyph.width > 0) && !glyph.accent && glyph.unicode.length === 1 && glyph.originalCharCode > 0) {
@@ -49,8 +52,12 @@ export function assertTextOnlyPage(operators, ops) {
 }
 
 /** Pending session objects are not present in the original rendering. */
-export function assertNoPendingText(bounds, pageNumber, objects) {
-  const boxes=objects.filter(object=>object.page===pageNumber && object.text.trim()).map(object=>{
+export function assertNoPendingText(bounds, pageNumber, objects, rotation = 0) {
+  const pending=objects.filter(object=>object.page===pageNumber && object.text.trim());
+  // Session notes rotate around their insertion point. Do not guess their
+  // footprint in substitute-font mode on a rotated page.
+  if (!Number.isFinite(rotation) || (rotation % 360 !== 0 && pending.length)) fail();
+  const boxes=pending.map(object=>{
     const lines=object.text.split('\n'),size=object.fontSize;
     return { id:object.id,pdfRectX:object.pdfX-size*.2,pdfRectY:object.pdfY-size*.4-(lines.length-1)*Math.max(24,size*1.4),
       pdfWidth:(Math.max(...lines.map(line=>line.length))+1)*size*1.2,
